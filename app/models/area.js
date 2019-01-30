@@ -1,5 +1,55 @@
 let baseModel = require('./baseModel');
 
+/**
+ * Area Schema
+ * @typedef {Object} AreaSchema
+ * @property {Number} _id - Area Id
+ * @property {Number} areaMysqlId -
+ * @property {Number} userMysqlId -
+ * @property {String} areaName -
+ * @property {String} postCode -
+ * @property {String} roadAndNumber -
+ * @property {String} yearOfEstablishment -
+ * @property {String} constructionMonth -
+ * @property {String} areaSize -
+ * @property {String} previousAgriculture -
+ * @property {String} previousChristmasTreesTurns -
+ * @property {String} plantMethod -
+ * @property {Number} numberOfTrees -
+ * @property {Number} currentNumberOfTrees -
+ * @property {String} organicProduction -
+ * @property {Number} growAge -
+ * @property {Number} productionTruns -
+ * @property {String} farmFieldId -
+ * @property {String} treeSize -
+ * @property {String} woodForm -
+ * @property {String} treeType -
+ * @property {String} operatingMode -
+ * @property {String} plantNumber -
+ * @property {Number} plantsize -
+ * @property {String} plantAge -
+ * @property {String} provenance -
+ * @property {String} provenanceCustom -
+ * @property {String} planteafstand -
+ * @property {String} raekkeafstand -
+ * @property {String} plantPattern -
+ * @property {String} trackWidth -
+ * @property {String} rowsBetweenTracks -
+ * @property {String} soilType -
+ * @property {String} terrainTopo -
+ * @property {String} terrainSlope -
+ * @property {String} windExposure -
+ * @property {String} fence -
+ * @property {String} notes -
+ * @property {String} trees -
+ * @property {String} activities -
+ * @property {String} areaImages 
+ * @property {String} mapLink -
+ * @property {Number} latitude -
+ * @property {Number} longitude -
+ * @property {String} openlayerMapFeatures -
+ */
+
 let areaSchema = new baseModel.Schema({
     areaMysqlId: Number,
 	userMysqlId: {type: Number, required: true},

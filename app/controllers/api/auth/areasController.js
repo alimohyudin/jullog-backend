@@ -177,13 +177,24 @@ class AreaHelper{
     }
 }
 
-module.exports = class AreasController {
+/**
+ * AreasController
+ * @class
+ */
+class AreasController {
 
     constructor() {
         
     }
 
-
+    /**
+     * Creates new area
+     * @function
+     * @param {AreaSchema}
+     * @description Creates Area under a user referenced to Mysql Database using token.<br>
+     * Field: req.USER_MYSQL_ID
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     async createArea(req, res){
 
         let hasAreas = await Factory.models.area.find({userMysqlId: req.USER_MYSQL_ID}).select('_id').exec();
@@ -280,6 +291,12 @@ module.exports = class AreasController {
             })
         })
     }
+    /**
+     * Update existing area
+     * @function
+     * @param {AreaSchema}
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     updateArea(req, res){
         req.checkBody('areaId', 'areaId is required').required();
         req.checkBody('areaName', 'areaName is required').required();
@@ -356,7 +373,14 @@ module.exports = class AreasController {
             })
         })
     }
-
+    /**
+     * Insert image into area
+     * @function
+     * @param {String} areaId 
+     * @param {Files} media
+     * @returns {PrepareResponse} Returns the Default response object.
+     * @deprecated Image Area is removed and replaced with Openlayer map
+     */
     insertAreaImages(req, res){
         console.log(req.body);
         req.checkBody('areaId', 'areaId is required.').required().isObjectId().withMessage('The selected area is invalid');
@@ -425,7 +449,12 @@ module.exports = class AreasController {
             
         //})
     }
-
+    /**
+     * Get Area Data
+     * @function
+     * @param {String} areaId
+     * @returns {PrepareResponse|AreaSchema} Returns the Default response object. With `data` object of type {@link AreaSchema}
+     */
     getAreaData(req, res){
         req.checkBody('areaId', 'areaId is required').required();
 
@@ -444,7 +473,16 @@ module.exports = class AreasController {
             }))
         })
     }
-
+    /**
+     * Get All Areas Overview
+     * @function
+     * @description 
+     * - It gets number of trees and total areas based on same age of all done activities<br>
+     * - Populates all the activities<br>
+     * - Calculates Age using {@link AreaSchema}.yearOfEstablishment<br>
+     * - Calculates Total Trees in each activity based on above age and using {@link ActivitySchema}.quantity<br>
+     * @returns {PrepareResponse|AreaSchema|AreaAge|AreaTrees|AreaSize} Returns the Default response object. With `data` object of Array of each Area having Area age, Total Trees and Area size
+     */
     getAllAreasOverview(req, res){
         Factory.models.area.find({
             userMysqlId: req.USER_MYSQL_ID
@@ -525,7 +563,13 @@ module.exports = class AreasController {
 
         });
     }
-
+    /**
+     * Delete Area
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @description Delete area and its all activities and trees.
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     deleteArea(req, res){
         req.checkBody('areaId', 'areaId is required').required();
         req.getValidationResult().then(async(result) =>{
@@ -556,6 +600,16 @@ module.exports = class AreasController {
 
         });
     }
+
+    /**
+     * Create Activity
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @param {String} activityType {@link ActivitySchema}.activityType
+     * @param {String} method {@link MethodSchema}._id
+     * @description Creates activity type under an area
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
 
     createActivity(req, res){
         req.checkBody('areaId', 'areaId is required').required();
@@ -693,6 +747,12 @@ module.exports = class AreasController {
         //})
     }
 
+    /**
+     * Get Activity Data
+     * @function
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
+     */
     getActivityData(req, res){
         req.checkBody('activityId', 'activityId is required').required();
 
@@ -712,6 +772,14 @@ module.exports = class AreasController {
         })
     }
 
+    /**
+     * Update Area Field
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @param {String} fieldName {@link AreaSchema} field name to update
+     * @param {String} value value for field
+     * @returns {PrepareResponse|AreaSchema} Returns the Default response object.  With updated `data` object of type {@link AreaSchema}
+     */
     updateAreaField(req, res){
       console.log("GETTING AREA DATA: ")
       console.log(req.body)
@@ -754,7 +822,14 @@ module.exports = class AreasController {
             })
         })
     }
-
+    /**
+     * Get Area Single Field
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @param {String} fieldName {@link AreaSchema} field name to get value for
+     * @description areaId is optional only if its request for openlayerMapFeatures for all areas. And it will return array of objects in data object.
+     * @returns {PrepareResponse|AreaName|AreaField} Returns the Default response object.  With `data` object containing AreaName and requested Field.
+     */
     getAreaField(req, res){
       console.log("AREA FIELD REQUEST: ")
       let where = {}
@@ -798,6 +873,16 @@ module.exports = class AreasController {
       })
     }
 
+    /**
+     * Update Activity
+     * @function
+     * @param {ActivitySchema} Form_Data
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @param {String} activityType {@link ActivitySchema}.activityType
+     * @todo Make {String} method {@link MethodSchema}._id to be required
+     * @description update activity type under an area
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     updateActivity(req, res){
         req.checkBody('activityId', 'activityId is required').required();
         req.checkBody('activityType', 'activityType is required').required();
@@ -872,6 +957,14 @@ module.exports = class AreasController {
         })
     }
 
+    /**
+     * Update Activity Field
+     * @function
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @param {String} fieldName {@link ActivitySchema} field name to update
+     * @param {String} value value for field
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With updated `data` object of type {@link ActivitySchema}
+     */
     updateActivityField(req, res){
         req.checkBody('activityId', 'activityId is required').required();
         req.checkBody('fieldName', 'fieldName is required').required();
@@ -906,6 +999,13 @@ module.exports = class AreasController {
         })
     }
 
+    /**
+     * Delete Activity
+     * @function
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @description Delete Activity
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     deleteActivity(req, res){
         req.checkBody('activityId', 'activityId is required').required();
         req.getValidationResult().then(async(result) =>{
@@ -933,7 +1033,14 @@ module.exports = class AreasController {
 
         });
     }
-    
+    /**
+     * Create Tree
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @description Creates activity type under an area
+     * @deprecated AreaMysqlId is deprecated because it was used for migrating from mysql to mongodb
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     createTree(req, res){
         console.log(req.body);
 
@@ -1099,7 +1206,13 @@ module.exports = class AreasController {
             })
         })
     }
-    
+    /**
+     * Delete Tree
+     * @function
+     * @param {String} treeId {@link TreeSchema}._id
+     * @description Delete Tree
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     deleteTree(req, res){
         req.checkBody('treeId', 'treeId is required').required();
         req.getValidationResult().then(async(result) =>{
@@ -1127,7 +1240,13 @@ module.exports = class AreasController {
 
         });
     }
-
+    /**
+     * Get All Areas with pagination
+     * @function
+     * @description Its using token to get userMysqlId and storing in req.USER_MYSQL_ID.<br/>
+     * If its admin (req.USER_MYSQL_ID = 1) then showing all areas instead of users areas.
+     * @returns {PrepareResponse|AreaSchema|Pagination} Returns the Default response object.  With `data` object containing paginated Areas
+     */
     getAreas(req, res){
         let where = {userMysqlId: req.USER_MYSQL_ID};
         let PER_PAGE_AREAS = Factory.env.PER_PAGE.AREAS;
@@ -1197,6 +1316,12 @@ module.exports = class AreasController {
         });
     }
 
+    /**
+     * Get All Areas without pagination
+     * @function
+     * @description Its using token to get userMysqlId and storing in req.USER_MYSQL_ID.
+     * @returns {PrepareResponse|AreaSchema} Returns the Default response object.  With `data` object containing Areas
+     */
     getAllAreas(req, res){
         let where = {userMysqlId: req.USER_MYSQL_ID};
         
@@ -1230,7 +1355,12 @@ module.exports = class AreasController {
             }
         });
     }
-
+    /**
+     * Get Area Data
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @returns {PrepareResponse|AreaSchema} Returns the Default response object.  With `data` object of type {@link AreaSchema}
+     */
     getAreaDetails(req, res){
         req.checkBody('areaId', 'areaId is required').required();
 
@@ -1264,7 +1394,20 @@ module.exports = class AreasController {
             })
         });
     }
-
+    /**
+     * Get Area Grouped Activities
+     * @function
+     * @param {Date} [fromDate] {@link ActivitySchema}.dateCompleted
+     * @param {Date} [toDate] {@link ActivitySchema}.dateCompleted
+     * @param {String} [areaId] {@link AreaSchema}._id
+     * @param {String} [status] {@link ActivitySchema}.status
+     * @param {String} [activityType] {@link ActivitySchema}.activityType
+     * @param {String} [freeTextSearch] {@link ActivitySchema}.{@link MethodSchema}.name, {@link ActivitySchema}.{@link InventorySchema}.name, {@link ActivitySchema}.performedBy, {@link ActivitySchema}.{@link MethodSchema}.contractor
+     * @description It simply returns filtered activities of all users.<br>
+     * It also calculates and return sum of total cost activities. Using {@link ActivitySchema}.totalCost, {@link ActivitySchema}.unitPrice2, {@link ActivitySchema}.totalHoursSpent
+     * @deprecated Grouping is no more used and need to update this function
+     * @returns {PrepareResponse|ActivitySchema|Pagination} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
+     */
     getAreaGroupedActivities(req, res){
         req.getValidationResult().then(async(result) =>{
             let match = {}, aggregation = [], where=[];
@@ -1426,105 +1569,20 @@ module.exports = class AreasController {
                 /**
                  * end
                  */
-
-                
-                /* let activitiesMap = Factory.helpers.groupBy(result, activity=>activity.activityType);
-                if(!req.body.areaId){
-                    if(req.body.freeTextSearch && req.body.freeTextSearch != ''){
-                        ////console.log(methodPopulatedResult);
-                        for (let key of activitiesMap.keys()) {
-                            ////console.log(activitiesMap.get(key));
-                            for(let index = 0; index < activitiesMap.get(key).length; index++){
-                                ////console.log(index);
-                                let key2 = activitiesMap.get(key)[index];
-                                if(
-                                    (key2.method && key2.method.name && key2.method.name.includes(req.body.freeTextSearch)) ||
-                                    (key2.mean && key2.mean.name && key2.mean.name.includes(req.body.freeTextSearch)) ||
-                                    (key2.performedBy && key2.performedBy.includes(req.body.freeTextSearch))
-                                ){
-                                    ////console.log("not deleting: "+index);
-                                }
-                                else{
-                                    ////console.log("deleting: "+index);
-                                    activitiesMap.get(key).splice(index,1);
-                                    index--;
-                                }
-
-                            }
-                        }
-                    }
-                        
-                } */
-                ////console.log();
-                ////console.log(Factory.helpers.groupBy(result, activity=>activity.activityType));
-                /* return res.send(Factory.helpers.prepareResponse({
-                            message: req.__('Activities data.'),
-                            data: JSON.stringify([...activitiesMap])
-                        })); */
             })
-
-
-            /*aggregation = [
-                { $match: match},
-                {$group:{"_id":"$activityType", activities: { $push: "$$ROOT"}}},
-            ];
-
-            Factory.models.activity.aggregate(aggregation)
-            .exec(async(err, result)=>{
-                if(err)
-                    return res.send(Factory.helpers.prepareResponse({
-                        success: false,
-                        message: 'Error finding activities.'
-                    }))
-
-                if(result){
-                    
-                    ////console.log(JSON.stringify(result));
-
-                    Factory.models.inventory.populate(result, {path: 'activities.mean'}, async(err, meanPopulatedResult) =>{
-                            if(err){
-                                //console.log(err);
-                                return res.send(Factory.helpers.prepareResponse({
-                                    success: false,
-                                    message: err
-                                }));
-                            }
-                            //console.log(meanPopulatedResult);
-                            Factory.models.method.populate(meanPopulatedResult, {path: 'activities.method'}, async(err, methodPopulatedResult) => {
-                                //console.log(methodPopulatedResult);
-                                if(!req.body.areaId){
-                                    if(req.body.method && req.body.method != ''){
-                                        ////console.log(methodPopulatedResult);
-                                        methodPopulatedResult.forEach(function(val, index, list){
-                                            ////console.log(val);
-                                            //console.log(1);
-                                            for (let index2 = list[index].activities.length -1; index2 >=0; index2--) {
-                                                if(!list[index].activities[index2].method.name.includes(req.body.method)){
-                                                    list[index].activities.splice(index2, 1);
-                                                }
-                                            }
-                                        })
-                                    }
-                                        
-                                }
-                                return res.send(Factory.helpers.prepareResponse({
-                                    message: req.__('Activities data.'),
-                                    data: methodPopulatedResult
-                                }));
-                            });
-                    });
-                }else{
-                    return res.send(Factory.helpers.prepareResponse({
-                        message: req.__('No activities data found.'),
-                        data: {}
-                    }));
-                }
-                
-            });*/
         });
         
     }
 
+    /**
+     * Get Area Tree Time Series Activities
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @param {Date} [fromDate] {@link ActivitySchema}.createdAt
+     * @param {Date} [toDate] {@link ActivitySchema}.createdAt
+     * @description It simply filter the activities by types [harvest, scrap, planting] and return sorted activities by old to new to finally calculate time series on frontend.
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
+     */
     getAreaTreeTimeSeriesActivities(req, res){
         req.checkBody('areaId', 'areaId is required.').required();
 
@@ -1572,7 +1630,17 @@ module.exports = class AreasController {
             })
         });
     }
-
+    /**
+     * Get Trees Data for Graphs
+     * @function
+     * @param {String} [areaId] {@link AreaSchema}._id
+     * @param {Date} [fromDate] {@link ActivitySchema}.createdAt
+     * @param {Date} [toDate] {@link ActivitySchema}.createdAt
+     * @param {Number} [age] {@link TreeSchema}.age
+     * @param {String} [charts] Comma seperated charts names
+     * @description It filters and aggregates trees data and send for the graphs.
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of custom type
+     */
     getTreesGraphData(req, res){
         console.log(req.body.age);
         let chartsFilter = [];
@@ -1722,7 +1790,16 @@ module.exports = class AreasController {
         });
     }
 
-
+    /**
+     * Get Trees Data for Height vs Assessment graph
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @param {String} areaChoice [This area, Other areas, Other Users' Areas]
+     * @param {Number} currentNumberOfTrees Calculated on front end 
+     * @param {Number} [age] {@link TreeSchema}.age
+     * @description It filters and aggregates trees data based on trees {@link TreeSchema}.treeHeight and {@link TreeSchema}.yourAssessment and send for the graph.
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of custom type
+     */
     getTreeHeightVsAssessmentGraphData(req, res){
 
         req.checkBody('areaId', 'areaId is required.');
@@ -1841,6 +1918,13 @@ module.exports = class AreasController {
 
 
     /* Small Functions Routes */
+    /**
+     * Deduct Inventory from Inventory
+     * @function
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @description It updates {@link ActivitySchema}.status, {@link ActivitySchema}.dateCompleted and {@link ActivitySchema}.{@link InventorySchema}.quantity
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
+     */
     deductQuantityFromInventory(req, res){
         req.checkBody('activityId', 'activityId is required').required();
 
@@ -1892,6 +1976,14 @@ module.exports = class AreasController {
         });
     }
 
+    /**
+     * Update Activity Status
+     * @function
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @param {String} status {@link ActivitySchema}.status
+     * @description It updates {@link ActivitySchema}.status, {@link ActivitySchema}.dateCompleted
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
+     */
     updateActivityStatus(req, res){
         req.checkBody('activityId', 'activityId is required').required();
         req.checkBody('status', 'status is required').required();
@@ -1931,7 +2023,12 @@ module.exports = class AreasController {
             })
         });
     }
-
+    /**
+     * Get Area's All Activities Costs
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @returns {PrepareResponse} Returns the Default response object. With `data` object having harvestTrees, plantedTrees, totalCost.
+     */
     areaAllActivitiesCosts(req, res){
         req.checkBody('areaId', 'areaId is required').required();
 
@@ -2008,7 +2105,13 @@ module.exports = class AreasController {
         })
     }
 
-
+    /**
+     * Recalculate and update Area's All Activities Costs
+     * @function
+     * @param {String} areaId {@link AreaSchema}._id
+     * @description It uses {@link MethodSchema}.unitPrice to calculate {@link ActivitySchema}.unitPrice2 (machine cost)
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     recalculateAllActivitiesCosts(req, res){
         req.checkBody('areaId', 'areaId is required').required();
 
@@ -2121,3 +2224,5 @@ module.exports = class AreasController {
         })
     }
 }
+
+module.exports = AreasController

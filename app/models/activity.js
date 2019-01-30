@@ -1,4 +1,43 @@
 let baseModel = require('./baseModel');
+/**
+ * Activity Schema for all sorts of Activities under Areas or Plans
+ * @typedef {Object} ActivitySchema
+ * @property {Number} _id - Activity Id
+ * @property {number} userMysqlId - 
+ * @property {string} areaId - 
+ * @property {string} planId - 
+ * @property {string} activityType - 
+ * @property {string} scheduledMonth - 
+ * @property {date} scheduledDate -
+ * @property {date} dateCompleted -
+ * @property {string} status -
+ * @property {string} dose - 
+ * @property {number} quantity - 
+ * @property {number} unitPrice1 - 
+ * @property {number} unitPrice2 - 
+ * @property {number} totalCost - 
+ * @property {string} performedBy - 
+ * @property {string} contractor - 
+ * @property {number} hoursSpent - 
+ * @property {string} purpose - 
+ * @property {string} reported - 
+ * @property {string} notes - 
+ * @property {string} weatherCondition -
+ * @property {string} wind -
+ * @property {string} temperature -
+ * @property {string} weather -
+ * @property {string} mean - {@link InventorySchema}
+ * @property {string} method - {@link MethodSchema}
+ * @property {number} ageYear -
+ * @property {number} ageMonth -
+ * @property {Boolean} [isQuantityDeducted] - 
+ * @property {number} percentage -
+ * @property {number} sellingPricePerUnit -
+ * @property {Boolean} autoUpdate - 
+ * @property {date} createdAt -
+ * @property {date} updatedAt -
+ * @property {date} deletedAt -
+ */
 
 let activitySchema = new baseModel.Schema({
 

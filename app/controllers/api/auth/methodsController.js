@@ -1,9 +1,21 @@
 let Factory = require('../../../util/factory');
 
-module.exports = class ActivityMethodsController {
+/**
+ * Methods Controller
+ * @class
+ */
+class MethodsController {
 
     constructor() {}
-
+    /**
+     * Creates new Method
+     * @function
+     * @param {String} Name - method name
+     * @param {MethodSchema} FormData - FormData
+     * @description Creates Plan under a user referenced to Mysql Database using token.<br>
+     * Field: req.USER_MYSQL_ID
+     * @returns {PrepareResponse} Returns the Default response object. With `data` object having {@link MethodSchema}
+     */
     createMethod(req, res){
         req.checkBody('name', 'name is required.').required();
         req.checkBody('activityType', 'activityType is required.').required();
@@ -49,7 +61,14 @@ module.exports = class ActivityMethodsController {
             })
         });
     }
-
+    /**
+     * Delete method
+     * @function
+     * @param {String} methodId {@link MethodSchema}._id
+     * @description Delete plan
+     * @todo and also handle linked activities to this method
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     deleteMethod(req, res){
         req.checkBody('methodId', 'methodId is required').required();
         req.getValidationResult().then(async(result) =>{
@@ -77,7 +96,14 @@ module.exports = class ActivityMethodsController {
 
         });
     }
-
+    /**
+     * Get methods
+     * @function
+     * @param {String} activityType {@link MethodSchema}.activityType
+     * @description Its using token to get userMysqlId stored in req.USER_MYSQL_ID.
+     * @todo Implement pagination as well
+     * @returns {PrepareResponse|MethodSchema} Returns the Default response object.  With `data` object containing Methods
+     */
     getMethods(req, res){
         let where = {userMysqlId: req.USER_MYSQL_ID};
         if(req.body.activityType)
@@ -97,7 +123,16 @@ module.exports = class ActivityMethodsController {
             }))
         })
     }
-
+    /**
+     * Update Method
+     * @function
+     * @param {MethodSchema} Form_Data
+     * @param {String} methodId {@link MethodSchema}._id
+     * @param {String} Name {@link MethodSchema}.name
+     * @param {String} ActivityType {@link MethodSchema}.activityType
+     * @description update Method
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     editMethod(req, res){
         req.checkBody('methodId', 'methodId is required').required();
         req.checkBody('name', 'name is required.').required();
@@ -143,3 +178,4 @@ module.exports = class ActivityMethodsController {
         });
     }
 }
+module.exports = MethodsController

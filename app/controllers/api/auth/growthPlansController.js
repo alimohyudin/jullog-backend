@@ -1,9 +1,20 @@
 let Factory = require('../../../util/factory');
 
-module.exports = class GrowthPlansController {
+/**
+ * GrowthPlansController
+ * @class
+ */
+class GrowthPlansController {
 
     constructor() {}
-
+    /**
+     * Creates new Plan
+     * @function
+     * @param {String} planName
+     * @description Creates Plan under a user referenced to Mysql Database using token.<br>
+     * Field: req.USER_MYSQL_ID
+     * @returns {PrepareResponse} Returns the Default response object. With `data` object having {@link GrowthPlanSchema}
+     */
     createPlan(req, res){
         req.checkBody('planName', 'planName is required.').required();
 
@@ -40,7 +51,14 @@ module.exports = class GrowthPlansController {
             })
         });
     }
-
+    /**
+     * Delete Plan
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @description Delete plan
+     * @todo and also delete its all activities.
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     deletePlan(req, res){
         req.checkBody('planId', 'planId is required').required();
         req.getValidationResult().then(async(result) =>{
@@ -68,7 +86,15 @@ module.exports = class GrowthPlansController {
 
         });
     }
-
+    /**
+     * Create Activity
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @param {String} activityType {@link ActivitySchema}.activityType
+     * @todo @param {String} method {@link MethodSchema}._id should be required
+     * @description Creates activity type under an area
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     createActivity(req, res){
         req.checkBody('planId', 'planId is required').required();
         req.checkBody('activityType', 'activityType is required').required();
@@ -169,7 +195,16 @@ module.exports = class GrowthPlansController {
             })
         })
     }
-
+    /**
+     * Update Activity
+     * @function
+     * @param {ActivitySchema} Form_Data
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @param {String} activityType {@link ActivitySchema}.activityType
+     * @todo Make {String} method {@link MethodSchema}._id to be required
+     * @description update activity
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     updateActivity(req, res){
         req.checkBody('activityId', 'activityId is required').required();
         req.checkBody('activityType', 'activityType is required').required();
@@ -232,7 +267,15 @@ module.exports = class GrowthPlansController {
             })
         })
     }
-
+    /**
+     * Update Activity
+     * @function
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @param {String} [ageYear] {@link ActivitySchema}.ageYear
+     * @param {String} [ageMonth] {@link ActivitySchema}.ageMonth
+     * @description update activity age
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     updateActivityAge(req, res){
       req.checkBody('activityId', 'activityId is required').required();
       /* req.checkBody('ageYear', 'year is required').required();
@@ -267,8 +310,14 @@ module.exports = class GrowthPlansController {
               }))
           })
       });
-  }
-
+    }
+    /**
+     * Delete Activity
+     * @function
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @description Delete Activity
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     deleteActivity(req, res){
         req.checkBody('activityId', 'activityId is required').required();
         req.getValidationResult().then(async(result) =>{
@@ -296,7 +345,12 @@ module.exports = class GrowthPlansController {
 
         });
     }
-
+    /**
+     * Get All Growth Plans without pagination
+     * @function
+     * @description Its using token to get userMysqlId stored in req.USER_MYSQL_ID.
+     * @returns {PrepareResponse|GrowthPlanSchema|Pagination} Returns the Default response object.  With `data` object containing Plans
+     */
     getPlans(req, res){
         Factory.models.growthPlan.find({userMysqlId: req.USER_MYSQL_ID})
         .exec(async(err, plans) => {
@@ -313,7 +367,12 @@ module.exports = class GrowthPlansController {
             }))
         })
     }
-
+    /**
+     * Get Activity Data
+     * @function
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
+     */
     getActivityData(req, res){
         req.checkBody('activityId', 'activityId is required').required();
 
@@ -332,7 +391,13 @@ module.exports = class GrowthPlansController {
             }))
         })
     }
-
+    /**
+     * Get Activities of a plan
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @description It populates {@link InventorySchema} and {@link MethodSchema}
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
+     */
     getPlanActivities(req, res){
       req.checkBody('planId', 'planId is required').required();
 
@@ -369,7 +434,14 @@ module.exports = class GrowthPlansController {
           });
       });
     }
-
+    /**
+     * Get Grouped Activities Based on Age Year of a plan
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @description It populates {@link InventorySchema} and {@link MethodSchema}
+     * @deprecated No more use for this function because grouping is no more needed.
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
+     */
     getPlanGroupedActivities(req, res){
         req.checkBody('planId', 'planId is required').required();
 
@@ -440,7 +512,14 @@ module.exports = class GrowthPlansController {
         });
         
     }
-
+    /**
+     * Copy planned activities to an area
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @param {String} areaId {@link AreaSchema}._id
+     * @description It uses {@link InventorySchema} and {@link MethodSchema} to calculate quantity and cost
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
+     */
     copyPlanActivities(req, res){
         req.checkBody('planId', 'planId is required').required();
         req.checkBody('areaId', 'areaId is required').required();
@@ -624,7 +703,14 @@ module.exports = class GrowthPlansController {
             })
         })
     }
-
+    /**
+     * Copy planned activities to all areas
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @description It uses {@link InventorySchema} and {@link MethodSchema} to calculate quantity and cost
+     * @todo Merge it with {@link copyPlanActivities}
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
+     */
     copyPlanActivitiesToAllAreas(req, res){
       req.checkBody('planId', 'planId is required').required();
 
@@ -808,8 +894,15 @@ module.exports = class GrowthPlansController {
               
           })
       })
-  }
-    
+    }
+    /**
+     * Copy single planned activity to an areas
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @param {String} areaId {@link AreaSchema}._id
+     * @description It uses {@link InventorySchema} and {@link MethodSchema} to calculate quantity and cost
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
+     */
     copySinglePlanActivity(req, res){
         req.checkBody('activityId', 'activityId is required').required();
         req.checkBody('areaId', 'areaId is required').required();
@@ -990,7 +1083,14 @@ module.exports = class GrowthPlansController {
             })
         })
     }
-
+    /**
+     * Copy single planned activity to an other plan
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @description It populates {@link InventorySchema} and {@link MethodSchema}
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
+     */
     copySinglePlanActivityToPlan(req, res){
       req.checkBody('activityId', 'activityId is required').required();
       req.checkBody('planId', 'planId is required').required();
@@ -1065,3 +1165,5 @@ module.exports = class GrowthPlansController {
       });
     }
 }
+
+module.exports = GrowthPlansController

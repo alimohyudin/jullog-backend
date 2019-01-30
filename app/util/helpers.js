@@ -7,7 +7,7 @@ Factory = require('../util/factory'),
 Bandwidth = require('node-bandwidth'),
 sharp = require('sharp');
 
-module.exports = class Helpers {
+class Helpers {
     
     constructor() { }
 
@@ -296,7 +296,29 @@ module.exports = class Helpers {
             }
         });
     }
+    /**
+     * @typedef Pagination
+     * @property {Number} total - Total count of items
+     * @property {Number} pages - Total pages
+     * @property {Number} per_page -  Per page items
+     * @property {Number} page  - current page number
+     */
 
+    /**
+     * @typedef HttpResponse
+     * @property {Boolean} success
+     * @property {String} message
+     * @property {Object} data
+     * @property {Pagination} pagination
+     * @property {Object} extras
+     */
+
+    /**
+     * Default HTTP Response
+     * @function PrepareResponse
+     * @param {Object} content 
+     * @return {HttpResponse}
+     */
     prepareResponse(content) {
         let response = {
             success: true,
@@ -565,3 +587,5 @@ module.exports = class Helpers {
         return retVal;
     }
 }
+
+module.exports = Helpers
