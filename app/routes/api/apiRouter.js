@@ -4,6 +4,7 @@ module.exports = (router) => {
     // register routes and return router
     let indexController = new (require('./../../controllers/api/indexController'))(),
     auth = {
+        activityController: new (require('./../../controllers/api/auth/activityController'))(),
         areasController: new (require('./../../controllers/api/auth/areasController'))(),
         growthPlansController: new (require('./../../controllers/api/auth/growthPlansController'))(),
         inventoryController: new (require('./../../controllers/api/auth/inventoryController'))(),
@@ -79,6 +80,11 @@ module.exports = (router) => {
     router.post('/auth/user/methods/delete-method', auth.methodsController.deleteMethod);
     router.post('/auth/user/methods/get-methods', auth.methodsController.getMethods);
     router.post('/auth/user/methods/edit-method', auth.methodsController.editMethod);
+
+    router.post('/auth/user/activity/create-activity', auth.activityController.createActivity);
+    router.post('/auth/user/activity/delete-activity', auth.activityController.deleteActivity);
+    router.post('/auth/user/activity/get-activities', auth.activityController.getActivities);
+    router.post('/auth/user/activity/edit-activity', auth.activityController.editActivity);
     
     
     return router;

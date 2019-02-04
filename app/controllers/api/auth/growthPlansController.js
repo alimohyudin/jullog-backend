@@ -93,6 +93,7 @@ class GrowthPlansController {
      * @param {String} activityType {@link ActivitySchema}.activityType
      * @todo @param {String} method {@link MethodSchema}._id should be required
      * @description Creates activity type under an area
+     * @deprecated No more use here. Use createActivity from {@link ActivityController}
      * @returns {PrepareResponse} Returns the Default response object.
      */
     createActivity(req, res){
@@ -203,6 +204,7 @@ class GrowthPlansController {
      * @param {String} activityType {@link ActivitySchema}.activityType
      * @todo Make {String} method {@link MethodSchema}._id to be required
      * @description update activity
+     * @deprecated No more use here. Use createActivity from {@link ActivityController}
      * @returns {PrepareResponse} Returns the Default response object.
      */
     updateActivity(req, res){
@@ -395,7 +397,7 @@ class GrowthPlansController {
      * Get Activities of a plan
      * @function
      * @param {String} planId {@link GrowthPlanSchema}._id
-     * @description It populates {@link InventorySchema} and {@link MethodSchema}
+     * @description It populates {@link InventorySchema}
      * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
      */
     getPlanActivities(req, res){
@@ -415,7 +417,6 @@ class GrowthPlansController {
 
           Factory.models.activity.find(match)
           .populate('mean')
-          .populate('method')
           .exec(async(err, result)=>{
               if(err){
                   //console.log(err);
@@ -438,7 +439,7 @@ class GrowthPlansController {
      * Get Grouped Activities Based on Age Year of a plan
      * @function
      * @param {String} planId {@link GrowthPlanSchema}._id
-     * @description It populates {@link InventorySchema} and {@link MethodSchema}
+     * @description It populates {@link InventorySchema}
      * @deprecated No more use for this function because grouping is no more needed.
      * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
      */
@@ -466,7 +467,6 @@ class GrowthPlansController {
 
             Factory.models.activity.find(match)
             .populate('mean')
-            .populate('method')
             .exec(async(err, result)=>{
                 if(err){
                     //console.log(err);
@@ -486,29 +486,6 @@ class GrowthPlansController {
                             data: JSON.stringify([...activitiesMap])
                         }));
             });
-            /*Factory.models.activity.aggregate(aggregation)
-            .exec(async(err, result)=>{
-                if(err)
-                    return res.send(Factory.helpers.prepareResponse({
-                        success: false,
-                        message: 'Error finding activities.'
-                    }))
-                if(result){
-                    Factory.models.inventory.populate(result, {path: 'activities.mean'}, async(err, meanPopulatedResult) =>{
-                        if(meanPopulatedResult){
-                            Factory.models.method.populate(meanPopulatedResult, {path: 'activities.method'}, async(err, methodPopulatedResult) => {
-                                if(methodPopulatedResult){
-                                    return res.send(Factory.helpers.prepareResponse({
-                                        message: req.__('Activities data.'),
-                                        data: methodPopulatedResult
-                                    }));
-                                }
-                            });
-                        }
-                    });
-                }
-                
-            });*/
         });
         
     }
@@ -517,7 +494,7 @@ class GrowthPlansController {
      * @function
      * @param {String} planId {@link GrowthPlanSchema}._id
      * @param {String} areaId {@link AreaSchema}._id
-     * @description It uses {@link InventorySchema} and {@link MethodSchema} to calculate quantity and cost
+     * @description It uses {@link InventorySchema} to calculate quantity and cost
      * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
      */
     copyPlanActivities(req, res){
@@ -609,47 +586,43 @@ class GrowthPlansController {
                         ////console.log(newActivity);
                         
 
-                        if(plan.activities[i].method){
-                            //console.log(plan.activities[i].method);
-                            let percentage = plan.activities[i].percentage?plan.activities[i].percentage:100;
-                            let method = await Factory.models.method.findOne({_id: plan.activities[i].method}).exec();
-                            //console.log(method);
-                            if(method.methodUnit == 'ha'){
-                                newActivity['unitPrice2'] = method.unitPrice * area.areaSize * (percentage/100);
-                                if(method.unitsPerHour && method.unitsPerHour > 0)
-                                  newActivity['hoursSpent'] = area.areaSize * (percentage/100) / method.unitsPerHour;
-                            }else if(method.methodUnit == 'pcs'){
-                                newActivity['unitPrice2'] = method.unitPrice * area.numberOfTrees * (percentage/100);
-                                if(method.unitsPerHour && method.unitsPerHour > 0)
-                                  newActivity['hoursSpent'] = area.numberOfTrees*(percentage/100) / method.unitsPerHour;
-                            }
-                            if(plan.activities[i].dose){
-                                console.log("Dose: "+plan.activities[i].dose);
-                                console.log("method: "+method);
-                                //newActivity['quantity'] = plan.activities[i].dose * area.areaSize;
-                                if(plan.activities[i].activityType == 'spraying' || plan.activities[i].activityType == 'fertilizing'){
-                                    if(method.methodUnit == "ha"){
-                                        newActivity['quantity'] = plan.activities[i].dose * area.areaSize*(percentage/100);
-                                        console.log("Percentage: "+percentage);
-                                        console.log("Area: "+area.areaSize);
-                                        console.log("Quantity: "+newActivity['quantity']);
-                                    }
-                                    else if(method.methodUnit == "pcs")
-                                        newActivity['quantity'] = plan.activities[i].dose * area.numberOfTrees*(percentage/100);
-                                }
-                            }else{
-                                //alert(area.numberOfTrees);
-                                console.log("Dose not found: ")
-                                if(method.methodUnit == "ha")
-                                    newActivity['quantity'] =  area.areaSize * (percentage/100);
-                                else if(method.methodUnit == "pcs")
-                                    newActivity['quantity'] = area.numberOfTrees * (percentage/100);
-                            }
-
-                            newActivity['totalCost'] = method.unitPrice * newActivity['quantity'] * (percentage/100);
-
-
+                        //console.log(plan.activities[i].method);
+                        let percentage = plan.activities[i].percentage?plan.activities[i].percentage:100;
+                        //console.log(method);
+                        if(plan.activities[i].methodUnit == 'ha'){
+                            newActivity['unitPrice2'] = plan.activities[i].unitPrice * area.areaSize * (percentage/100);
+                            if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
+                                newActivity['hoursSpent'] = area.areaSize * (percentage/100) / plan.activities[i].methodUnitsPerHour;
+                        }else if(plan.activities[i].methodUnit == 'pcs'){
+                            newActivity['unitPrice2'] = plan.activities[i].unitPrice * area.numberOfTrees * (percentage/100);
+                            if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
+                                newActivity['hoursSpent'] = area.numberOfTrees*(percentage/100) / plan.activities[i].methodUnitsPerHour;
                         }
+                        if(plan.activities[i].dose){
+                            console.log("Dose: "+plan.activities[i].dose);
+                            console.log("method: "+method);
+                            //newActivity['quantity'] = plan.activities[i].dose * area.areaSize;
+                            if(plan.activities[i].activityType == 'spraying' || plan.activities[i].activityType == 'fertilizing'){
+                                if(plan.activities[i].methodUnit == "ha"){
+                                    newActivity['quantity'] = plan.activities[i].dose * area.areaSize*(percentage/100);
+                                    console.log("Percentage: "+percentage);
+                                    console.log("Area: "+area.areaSize);
+                                    console.log("Quantity: "+newActivity['quantity']);
+                                }
+                                else if(plan.activities[i].methodUnit == "pcs")
+                                    newActivity['quantity'] = plan.activities[i].dose * area.numberOfTrees*(percentage/100);
+                            }
+                        }else{
+                            //alert(area.numberOfTrees);
+                            console.log("Dose not found: ")
+                            if(plan.activities[i].methodUnit == "ha")
+                                newActivity['quantity'] =  area.areaSize * (percentage/100);
+                            else if(plan.activities[i].methodUnit == "pcs")
+                                newActivity['quantity'] = area.numberOfTrees * (percentage/100);
+                        }
+
+                        newActivity['totalCost'] = plan.activities[i].unitPrice * newActivity['quantity'] * (percentage/100);
+
 
                         console.log("New activity Copied");
                         //console.log(newActivity);
@@ -707,7 +680,7 @@ class GrowthPlansController {
      * Copy planned activities to all areas
      * @function
      * @param {String} planId {@link GrowthPlanSchema}._id
-     * @description It uses {@link InventorySchema} and {@link MethodSchema} to calculate quantity and cost
+     * @description It uses {@link InventorySchema} and {@link ActivitySchema} to calculate quantity and cost
      * @todo Merge it with {@link copyPlanActivities}
      * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
      */
@@ -803,47 +776,41 @@ class GrowthPlansController {
 
                     ////console.log(newActivity);
                     
-
-                    if(plan.activities[i].method){
-                        //console.log(plan.activities[i].method);
-                        let percentage = plan.activities[i].percentage?plan.activities[i].percentage:100;
-                        let method = await Factory.models.method.findOne({_id: plan.activities[i].method}).exec();
-                        //console.log(method);
-                        if(method.methodUnit == 'ha'){
-                            newActivity['unitPrice2'] = method.unitPrice * singleArea.areaSize * (percentage/100);
-                            if(method.unitsPerHour && method.unitsPerHour > 0)
-                              newActivity['hoursSpent'] = singleArea.areaSize * (percentage/100) / method.unitsPerHour;
-                        }else if(method.methodUnit == 'pcs'){
-                            newActivity['unitPrice2'] = method.unitPrice * singleArea.numberOfTrees * (percentage/100);
-                            if(method.unitsPerHour && method.unitsPerHour > 0)
-                              newActivity['hoursSpent'] = singleArea.numberOfTrees*(percentage/100) / method.unitsPerHour;
-                        }
-                        if(plan.activities[i].dose){
-                            console.log("Dose: "+plan.activities[i].dose);
-                            console.log("method: "+method);
-                            //newActivity['quantity'] = plan.activities[i].dose * singleArea.areaSize;
-                            if(plan.activities[i].activityType == 'spraying' || plan.activities[i].activityType == 'fertilizing'){
-                                if(method.methodUnit == "ha"){
-                                    newActivity['quantity'] = plan.activities[i].dose * singleArea.areaSize*(percentage/100);
-                                    console.log("Percentage: "+percentage);
-                                    console.log("Area: "+singleArea.areaSize);
-                                    console.log("Quantity: "+newActivity['quantity']);
-                                }
-                                else if(method.methodUnit == "pcs")
-                                    newActivity['quantity'] = plan.activities[i].dose * singleArea.numberOfTrees*(percentage/100);
-                            }
-                        }else{
-                            //alert(area.numberOfTrees);
-                            if(method.methodUnit == "ha")
-                                newActivity['quantity'] =  singleArea.areaSize * (percentage/100);
-                            else if(method.methodUnit == "pcs")
-                                newActivity['quantity'] = singleArea.numberOfTrees * (percentage/100);
-                        }
-
-                        newActivity['totalCost'] = method.unitPrice * newActivity['quantity'] * (percentage/100);
-
-
+                    //console.log(plan.activities[i].method);
+                    let percentage = plan.activities[i].percentage?plan.activities[i].percentage:100;
+                    if(plan.activities[i].methodUnit == 'ha'){
+                        newActivity['unitPrice2'] = plan.activities[i].unitPrice * area.areaSize * (percentage/100);
+                        if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
+                            newActivity['hoursSpent'] = area.areaSize * (percentage/100) / plan.activities[i].methodUnitsPerHour;
+                    }else if(plan.activities[i].methodUnit == 'pcs'){
+                        newActivity['unitPrice2'] = plan.activities[i].unitPrice * area.numberOfTrees * (percentage/100);
+                        if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
+                            newActivity['hoursSpent'] = area.numberOfTrees*(percentage/100) / plan.activities[i].methodUnitsPerHour;
                     }
+                    if(plan.activities[i].dose){
+                        console.log("Dose: "+plan.activities[i].dose);
+                        console.log("method: "+method);
+                        //newActivity['quantity'] = plan.activities[i].dose * area.areaSize;
+                        if(plan.activities[i].activityType == 'spraying' || plan.activities[i].activityType == 'fertilizing'){
+                            if(plan.activities[i].methodUnit == "ha"){
+                                newActivity['quantity'] = plan.activities[i].dose * area.areaSize*(percentage/100);
+                                console.log("Percentage: "+percentage);
+                                console.log("Area: "+area.areaSize);
+                                console.log("Quantity: "+newActivity['quantity']);
+                            }
+                            else if(plan.activities[i].methodUnit == "pcs")
+                                newActivity['quantity'] = plan.activities[i].dose * area.numberOfTrees*(percentage/100);
+                        }
+                    }else{
+                        //alert(area.numberOfTrees);
+                        console.log("Dose not found: ")
+                        if(plan.activities[i].methodUnit == "ha")
+                            newActivity['quantity'] =  area.areaSize * (percentage/100);
+                        else if(plan.activities[i].methodUnit == "pcs")
+                            newActivity['quantity'] = area.numberOfTrees * (percentage/100);
+                    }
+
+                    newActivity['totalCost'] = plan.activities[i].unitPrice * newActivity['quantity'] * (percentage/100);
 
                     console.log("New Copied Activity: ");
                     console.log(newActivity);
@@ -900,7 +867,7 @@ class GrowthPlansController {
      * @function
      * @param {String} planId {@link GrowthPlanSchema}._id
      * @param {String} areaId {@link AreaSchema}._id
-     * @description It uses {@link InventorySchema} and {@link MethodSchema} to calculate quantity and cost
+     * @description It uses {@link InventorySchema} and {@link ActivitySchema} to calculate quantity and cost
      * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
      */
     copySinglePlanActivity(req, res){
@@ -991,46 +958,42 @@ class GrowthPlansController {
                         ////console.log(newActivity);
                         
 
-                        if(activity.method){
-                            //console.log(activity.method);
-                            let percentage = activity.percentage?activity.percentage:100;
-                            let method = await Factory.models.method.findOne({_id: activity.method}).exec();
-                            //console.log(method);
-                            if(method.methodUnit == 'ha'){
-                                newActivity['unitPrice2'] = method.unitPrice * area.areaSize * (percentage/100);
-                                if(method.unitsPerHour && method.unitsPerHour > 0)
-                                  newActivity['hoursSpent'] = area.areaSize * (percentage/100) / method.unitsPerHour;
-                            }else if(method.methodUnit == 'pcs'){
-                                newActivity['unitPrice2'] = method.unitPrice * area.numberOfTrees * (percentage/100);
-                                if(method.unitsPerHour && method.unitsPerHour > 0)
-                                  newActivity['hoursSpent'] = area.numberOfTrees*(percentage/100) / method.unitsPerHour;
-                            }
-                            if(activity.dose){
-                                console.log("Dose: "+activity.dose);
-                                console.log("method: "+method);
-                                //newActivity['quantity'] = activity.dose * area.areaSize;
-                                if(activity.activityType == 'spraying' || activity.activityType == 'fertilizing'){
-                                    if(method.methodUnit == "ha"){
-                                        newActivity['quantity'] = activity.dose * area.areaSize*(percentage/100);
-                                        console.log("Percentage: "+percentage);
-                                        console.log("Area: "+area.areaSize);
-                                        console.log("Quantity: "+newActivity['quantity']);
-                                    }
-                                    else if(method.methodUnit == "pcs")
-                                        newActivity['quantity'] = activity.dose * area.numberOfTrees*(percentage/100);
-                                }
-                            }else{
-                                //alert(area.numberOfTrees);
-                                if(method.methodUnit == "ha")
-                                    newActivity['quantity'] =  area.areaSize * (percentage/100);
-                                else if(method.methodUnit == "pcs")
-                                    newActivity['quantity'] = area.numberOfTrees * (percentage/100);
-                            }
-
-                            newActivity['totalCost'] = method.unitPrice * newActivity['quantity'] * (percentage/100);
-
-
+                        //console.log(activity.method);
+                        let percentage = activity.percentage?activity.percentage:100;
+                        if(activity.methodUnit == 'ha'){
+                            newActivity['unitPrice2'] = activity.unitPrice * area.areaSize * (percentage/100);
+                            if(activity.methodUnitsPerHour && activity.methodUnitsPerHour > 0)
+                                newActivity['hoursSpent'] = area.areaSize * (percentage/100) / activity.methodUnitsPerHour;
+                        }else if(activity.methodUnit == 'pcs'){
+                            newActivity['unitPrice2'] = activity.unitPrice * area.numberOfTrees * (percentage/100);
+                            if(activity.methodUnitsPerHour && activity.methodUnitsPerHour > 0)
+                                newActivity['hoursSpent'] = area.numberOfTrees*(percentage/100) / activity.methodUnitsPerHour;
                         }
+                        if(activity.dose){
+                            console.log("Dose: "+activity.dose);
+                            console.log("method: "+method);
+                            //newActivity['quantity'] = activity.dose * area.areaSize;
+                            if(activity.activityType == 'spraying' || activity.activityType == 'fertilizing'){
+                                if(activity.methodUnit == "ha"){
+                                    newActivity['quantity'] = activity.dose * area.areaSize*(percentage/100);
+                                    console.log("Percentage: "+percentage);
+                                    console.log("Area: "+area.areaSize);
+                                    console.log("Quantity: "+newActivity['quantity']);
+                                }
+                                else if(activity.methodUnit == "pcs")
+                                    newActivity['quantity'] = activity.dose * area.numberOfTrees*(percentage/100);
+                            }
+                        }else{
+                            //alert(area.numberOfTrees);
+                            console.log("Dose not found: ")
+                            if(activity.methodUnit == "ha")
+                                newActivity['quantity'] =  area.areaSize * (percentage/100);
+                            else if(activity.methodUnit == "pcs")
+                                newActivity['quantity'] = area.numberOfTrees * (percentage/100);
+                        }
+
+                        newActivity['totalCost'] = activity.unitPrice * newActivity['quantity'] * (percentage/100);
+
 
                         console.log("New Copied Activity: ");
                         console.log(newActivity);
@@ -1139,7 +1102,6 @@ class GrowthPlansController {
 
             Factory.models.activity.findOne({_id: copiedActivity._id})
             .populate('mean')
-            .populate('method')
             .exec(async(err, result)=>{
                 if(err){
                     //console.log(err);
