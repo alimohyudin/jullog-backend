@@ -84,7 +84,7 @@ module.exports = (router) => {
     router.post('/auth/user/activity/create-activity', auth.activityController.createActivity);
     router.post('/auth/user/activity/delete-activity', auth.activityController.deleteActivity);
     router.post('/auth/user/activity/get-activities', auth.activityController.getActivities);
-    router.post('/auth/user/activity/edit-activity', auth.activityController.editActivity);
+    router.post('/auth/user/activity/update-activity', auth.activityController.updateActivity);
     
     
     return router;

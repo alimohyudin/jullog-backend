@@ -210,15 +210,23 @@ class ActivityController {
      * Get activities with pagination
      * @function
      * @description Its using token to get userMysqlId stored in req.USER_MYSQL_ID.
+     * @todo Return complete list of Template Activities for the Activity Form to show all templates to be selected.
      * @returns {PrepareResponse|ActivitySchema|Pagination} Returns the Default response object.  With `data` object containing activities and pagination
      */
     getActivities(req, res){
         let where = {userMysqlId: req.USER_MYSQL_ID};
         let PER_PAGE_ACTIVITIES = Factory.env.PER_PAGE.ACTIVITIES;
 
+        if(req.body.activityId)
+            where._id = req.body.activityId
+        if(req.body.activityCategory && req.body.activityCategory !== '')
+            where.activityCategory = req.body.activityCategory
+        if(req.body.activityType)
+            where.activityType = req.body.activityType
+        
         where.deletedAt = null;
 
-        Factory.models.activities.count(where, (err, count) => {
+        Factory.models.activity.count(where, (err, count) => {
             let page = Math.abs(req.body.page);
             let pagination = {
                 total: count,
@@ -230,7 +238,7 @@ class ActivityController {
                 let skip = (pagination.page-1)*PER_PAGE_ACTIVITIES;
                 pagination.previous = pagination.page - 1;
                 pagination.next = pagination.page + 1;
-                Factory.models.activities.find(where)
+                Factory.models.activity.find(where)
                 .sort({dateCompleted: 1})
                 .lean(true)
                 .limit(PER_PAGE_ACTIVITIES)
