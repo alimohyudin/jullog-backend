@@ -3,6 +3,7 @@ let Factory = require('../../../util/factory');
 /**
  * Methods Controller
  * @class
+ * @deprecated No more use for this methods controller
  */
 class MethodsController {
 

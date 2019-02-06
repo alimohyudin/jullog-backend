@@ -606,20 +606,19 @@ class AreasController {
      * @function
      * @param {String} areaId {@link AreaSchema}._id
      * @param {String} activityType {@link ActivitySchema}.activityType
-     * @param {String} method {@link MethodSchema}._id
+     * @param {String} activityCategory
      * @description Creates activity type under an area
+     * @deprecated No more use here. Use createActivity from {@link ActivityController}
      * @returns {PrepareResponse} Returns the Default response object.
      */
 
     createActivity(req, res){
         req.checkBody('areaId', 'areaId is required').required();
         req.checkBody('activityType', 'activityType is required').required();
-        req.checkBody('method', req.__('method is required')).required();
+        req.checkBody('activityCategory', req.__('activityCategory is required')).required();
 
         if(req.body.activityType == "spraying" || req.body.activityType == "fertilizer")
             req.checkBody('mean', 'mean is required').required();
-
-        ////console.log(req.body);
 
         req.getValidationResult().then(async(result) => {
             if(!result.isEmpty()){
@@ -628,123 +627,85 @@ class AreasController {
                     message: req.__(result.array()[0].msg)
                 }));
             }
+            let activity = {
+                userMysqlId: req.USER_MYSQL_ID,
+                areaId: req.body.areaId,
+                activityCategory: req.body.activityCategory,
+                name: (req.body.name) ? req.body.name : '',
 
-            /* Factory.models.area.findOne({_id: req.body.areaId})
-            .exec(async(err, myArea) => {
+                methodUnit: (req.body.methodUnit) ? req.body.methodUnit : '',
+                methodUnitPrice: (req.body.methodUnitPrice) ?  req.body.methodUnitPrice: 0,
+                plantDistance: (req.body.plantDistance) ? req.body.plantDistance : 0,
+                rowDistance: (req.body.rowDistance) ? req.body.rowDistance : 0,
+                trackPercentage: (req.body.trackPercentage) ? req.body.trackPercentage : 0,
+                provenance: (req.body.provenance) ? req.body.provenance : 0,
+                plantSize: (req.body.plantSize) ? req.body.plantSize : 0,
+                plantAge: (req.body.plantAge) ? req.body.plantAge : 0,
+                
+
+                activityType: req.body.activityType,
+                scheduledMonth: (req.body.scheduledMonth) ? req.body.scheduledMonth : '',
+                scheduledDate: (req.body.scheduledDate) ? req.body.scheduledDate : '',
+                dateCompleted: (req.body.dateCompleted) ? req.body.dateCompleted : '',
+                status:(req.body.status) ? req.body.status : 'Plan',
+                dose: (req.body.dose) ? req.body.dose : '',
+                quantity: (req.body.quantity) ? req.body.quantity : '',
+                meanCost: (req.body.meanCost) ? req.body.meanCost : '',
+                machineCost: (req.body.machineCost) ? req.body.machineCost : '',
+                totalCost: (req.body.totalCost) ? req.body.totalCost : '',
+                performedBy: (req.body.performedBy) ? req.body.performedBy : '',
+                contractor: (req.body.contractor) ? req.body.contractor : '',
+                hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
+                purpose: (req.body.purpose) ? req.body.purpose : '',
+                reported: (req.body.reported) ? req.body.reported : '',
+                notes: (req.body.notes) ? req.body.notes : '',
+
+                weatherCondition: (req.body.weatherCondition) ? req.body.weatherCondition : '',
+                wind: (req.body.wind) ? req.body.wind : '',
+                temperature: (req.body.temperature) ? req.body.temperature : '',
+                weather: (req.body.weather) ? req.body.weather : '',
+                
+                ageYear: (req.body.ageYear) ? req.body.ageYear : 0,
+                ageMonth: (req.body.ageMonth) ? req.body.ageMonth : 1,
+                
+                percentageOfTrees: (req.body.percentageOfTrees) ? req.body.percentageOfTrees: 0,
+                sellingPricePerUnit: (req.body.sellingPricePerUnit) ? req.body.sellingPricePerUnit: 0,
+
+                percentage: (req.body.percentage)? req.body.percentage: 100,
+
+                autoUpdate: (req.body.autoUpdate)? req.body.autoUpdate : false,
+
+                createdAt: (req.body.createdAt) ? req.body.createdAt: new Date(),
+                updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
+            };
+
+            if(req.body.mean)
+                activity['mean'] = req.body.mean;
+            // save
+            Factory.models.activity(activity).save(async(err, newActivity) => {
                 if(err){
                     return res.send(Factory.helpers.prepareResponse({
                         success: false,
-                        message: req.__('Area not found.')
+                        message: req.__('Something went wrong with creating activity functionality.')
                     }))
-                } */
+                }
 
-                let activity = {
-                    userMysqlId: req.USER_MYSQL_ID,
-                    areaId: req.body.areaId,
-
-                    activityType: req.body.activityType,
-                    scheduledMonth: (req.body.scheduledMonth) ? req.body.scheduledMonth : '',
-                    scheduledDate: (req.body.scheduledDate) ? req.body.scheduledDate : '',
-                    dateCompleted: (req.body.dateCompleted) ? req.body.dateCompleted : '',
-                    status:(req.body.status) ? req.body.status : 'Plan',
-                    dose: (req.body.dose) ? req.body.dose : '',
-                    quantity: (req.body.quantity) ? req.body.quantity : '',
-                    unitPrice1: (req.body.unitPrice1) ? req.body.unitPrice1 : '',
-                    unitPrice2: (req.body.unitPrice2) ? req.body.unitPrice2 : '',
-                    totalCost: (req.body.totalCost) ? req.body.totalCost : '',
-                    performedBy: (req.body.performedBy) ? req.body.performedBy : '',
-                    contractor: (req.body.contractor) ? req.body.contractor : '',
-                    hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
-                    purpose: (req.body.purpose) ? req.body.purpose : '',
-                    reported: (req.body.reported) ? req.body.reported : '',
-                    notes: (req.body.notes) ? req.body.notes : '',
-
-                    weatherCondition: (req.body.weatherCondition) ? req.body.weatherCondition : '',
-                    wind: (req.body.wind) ? req.body.wind : '',
-                    temperature: (req.body.temperature) ? req.body.temperature : '',
-                    weather: (req.body.weather) ? req.body.weather : '',
-                    
-                    ageYear: (req.body.ageYear) ? req.body.ageYear : 0,
-                    ageMonth: (req.body.ageMonth) ? req.body.ageMonth : 1,
-                    
-                    percentageOfTrees: (req.body.percentageOfTrees) ? req.body.percentageOfTrees: 0,
-                    sellingPricePerUnit: (req.body.sellingPricePerUnit) ? req.body.sellingPricePerUnit: 0,
-
-                    percentage: (req.body.percentage)? req.body.percentage: 100,
-
-                    autoUpdate: (req.body.autoUpdate)? req.body.autoUpdate : false,
-
-                    createdAt: (req.body.createdAt) ? req.body.createdAt: new Date(),
-                    updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
-                };
-
-                if(req.body.mean)
-                    activity['mean'] = req.body.mean;
-                if(req.body.method)
-                    activity['method'] = req.body.method;
-                // save
-                Factory.models.activity(activity).save(async(err, newActivity) => {
+                /* push activity to area */
+                Factory.models.area.findOneAndUpdate(
+                    { _id: req.body.areaId },
+                    { "$push": { "activities": newActivity._id } }
+                ).exec(async(err, updatedArea)=>{
                     if(err){
-                        return res.send(Factory.helpers.prepareResponse({
-                            success: false,
-                            message: req.__('Something went wrong with creating activity functionality.')
-                        }))
+                        console.log(err);
                     }
+                });
 
-                    /* push activity to area */
-                    Factory.models.area.findOneAndUpdate(
-                        { _id: req.body.areaId },
-                        { "$push": { "activities": newActivity._id } }
-                    ).exec(async(err, updatedArea)=>{
-                        if(err){
-                            console.log(err);
-                        }
-                    });
-
-                    res.send(Factory.helpers.prepareResponse({
-                        message: req.__('activity Created!'),
-                        data: newActivity,
-                    }));
-
-
-
-                    /* check if dateCompleted of activity is before or equal to today's date then update currentNumberOfTrees of Area */
-                    /* let dateCompleted = new Date(req.body.dateCompleted);
-                    let nowDate = new Date();
-
-                    if(req.body.dateCompleted && req.body.quantity && dateCompleted.getTime() <= nowDate.getTime()){
-                        console.log("Date comparison works!");
-                        if(myArea.currentNumberOfTrees){
-                            myArea.currentNumberOfTrees -= req.body.quantity;
-                        }
-                    }else{
-                        console.log("Date comparison returned false.");
-                    } */
-                    /*  */
-                    
-                    /* console.log("Activities: ");
-                    console.log(myArea);
-                    myArea.activities.push(newActivity._id);
-                    console.log("Activities: ");
-                    console.log(myArea);
-
-                    myArea.save(async(err, updatedArea) => {
-                        if(err){
-                            console.log(err);
-                            return res.send(Factory.helpers.prepareResponse({
-                                success: false,
-                                message: req.__('Vurdering oprettet.'),//area inside activity is not updated.
-                            }))
-                        }
-
-                        res.send(Factory.helpers.prepareResponse({
-                            message: req.__('activity Created!'),
-                            data: newActivity,
-                        }));
-                    }) */
-                })
+                res.send(Factory.helpers.prepareResponse({
+                    message: req.__('activity Created!'),
+                    data: newActivity,
+                }));
             })
-        //})
+        })
     }
 
     /**
@@ -879,13 +840,13 @@ class AreasController {
      * @param {ActivitySchema} Form_Data
      * @param {String} activityId {@link ActivitySchema}._id
      * @param {String} activityType {@link ActivitySchema}.activityType
-     * @todo Make {String} method {@link MethodSchema}._id to be required
      * @description update activity type under an area
+     * @deprecated No more use here. Use updateActivity from {@link ActivityController}
      * @returns {PrepareResponse} Returns the Default response object.
      */
     updateActivity(req, res){
         req.checkBody('activityId', 'activityId is required').required();
-        req.checkBody('activityType', 'activityType is required').required();
+        //req.checkBody('activityType', 'activityType is required').required();
 
         req.getValidationResult().then(async(result) => {
             if(!result.isEmpty()){
@@ -897,15 +858,26 @@ class AreasController {
 
             var activity = {
 
-                activityType: req.body.activityType,
+                //activityType: req.body.activityType,
+                name: (req.body.name) ? req.body.name : '',
+
+                methodUnit: (req.body.methodUnit) ? req.body.methodUnit : '',
+                methodUnitPrice: (req.body.methodUnitPrice) ?  req.body.methodUnitPrice: 0,
+                plantDistance: (req.body.plantDistance) ? req.body.plantDistance : 0,
+                rowDistance: (req.body.rowDistance) ? req.body.rowDistance : 0,
+                trackPercentage: (req.body.trackPercentage) ? req.body.trackPercentage : 0,
+                provenance: (req.body.provenance) ? req.body.provenance : 0,
+                plantSize: (req.body.plantSize) ? req.body.plantSize : 0,
+                plantAge: (req.body.plantAge) ? req.body.plantAge : 0,
+                
                 scheduledMonth: (req.body.scheduledMonth) ? req.body.scheduledMonth : '',
                 scheduledDate: (req.body.scheduledDate) ? req.body.scheduledDate : '',
                 dateCompleted: (req.body.dateCompleted) ? req.body.dateCompleted : '',
                 status:(req.body.status) ? req.body.status : 'Plan',
                 dose: (req.body.dose) ? req.body.dose : '',
                 quantity: (req.body.quantity) ? req.body.quantity : '',
-                unitPrice1: (req.body.unitPrice1) ? req.body.unitPrice1 : '',
-                unitPrice2: (req.body.unitPrice2) ? req.body.unitPrice2 : '',
+                meanCost: (req.body.meanCost) ? req.body.meanCost : '',
+                machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy) ? req.body.performedBy : '',
                 contractor: (req.body.contractor) ? req.body.contractor : '',
@@ -933,8 +905,6 @@ class AreasController {
 
             if(req.body.mean && req.body.mean != '')
                 activity['mean'] = req.body.mean;
-            if(req.body.method && req.body.method != '')
-                activity['method'] = req.body.method;
 
             // save
             Factory.models.activity.update({_id: req.body.activityId}, activity, async(err, newActivity) => {
@@ -1402,9 +1372,9 @@ class AreasController {
      * @param {String} [areaId] {@link AreaSchema}._id
      * @param {String} [status] {@link ActivitySchema}.status
      * @param {String} [activityType] {@link ActivitySchema}.activityType
-     * @param {String} [freeTextSearch] {@link ActivitySchema}.{@link MethodSchema}.name, {@link ActivitySchema}.{@link InventorySchema}.name, {@link ActivitySchema}.performedBy, {@link ActivitySchema}.{@link MethodSchema}.contractor
+     * @param {String} [freeTextSearch] {@link ActivitySchema}.{@link InventorySchema}.name, {@link ActivitySchema}.performedBy
      * @description It simply returns filtered activities of all users.<br>
-     * It also calculates and return sum of total cost activities. Using {@link ActivitySchema}.totalCost, {@link ActivitySchema}.unitPrice2, {@link ActivitySchema}.totalHoursSpent
+     * It also calculates and return sum of total cost activities. Using {@link ActivitySchema}.totalCost, {@link ActivitySchema}.machineCost, {@link ActivitySchema}.totalHoursSpent
      * @deprecated Grouping is no more used and need to update this function
      * @returns {PrepareResponse|ActivitySchema|Pagination} Returns the Default response object.  With `data` object of type {@link ActivitySchema}
      */
@@ -1476,7 +1446,6 @@ class AreasController {
             Factory.models.activity.find(match)
             .populate({path: 'areaId', select: '_id areaName', model: Factory.models.area})
             .populate('mean')
-            .populate('method')
             .exec(async(err, result)=>{
                 if(err){
                     return res.send(Factory.helpers.prepareResponse({
@@ -1491,7 +1460,6 @@ class AreasController {
                     for(let index = 0; index < result.length; index++){
                         let key2 = result[index];
                         if(
-                            (key2.method && key2.method.name && key2.method.name.toLowerCase().includes(req.body.freeTextSearch.toLowerCase())) ||
                             (key2.mean && key2.mean.name && key2.mean.name.toLowerCase().includes(req.body.freeTextSearch.toLowerCase())) ||
                             (key2.performedBy && key2.performedBy.toLowerCase().includes(req.body.freeTextSearch.toLowerCase())) ||
                             (key2.contractor && key2.contractor.toLowerCase().includes(req.body.freeTextSearch.toLowerCase()))
@@ -1516,8 +1484,8 @@ class AreasController {
                     const val = result[index];
                     if(!isNaN(val.totalCost))
                         totalCost += val.totalCost;
-                    if(!isNaN(val.unitPrice2))
-                        totalUnitPrice += val.unitPrice2;
+                    if(!isNaN(val.machineCost))
+                        totalUnitPrice += val.machineCost;
                     if(!isNaN(val.hoursSpent))
                         totalHoursSpent += val.hoursSpent;
                 }
@@ -2082,7 +2050,7 @@ class AreasController {
                         }
                         
                         
-                        totalCost += allActivities[i].totalCost + allActivities[i].unitPrice2;
+                        totalCost += allActivities[i].totalCost + allActivities[i].machineCost;
 
                         console.log("After Quantity: "+currentNumberOfTrees);
                         console.log("Updated");
@@ -2109,7 +2077,7 @@ class AreasController {
      * Recalculate and update Area's All Activities Costs
      * @function
      * @param {String} areaId {@link AreaSchema}._id
-     * @description It uses {@link MethodSchema}.unitPrice to calculate {@link ActivitySchema}.unitPrice2 (machine cost)
+     * @description It uses {@link ActivitySchema}.methodUnitPrice to calculate {@link ActivitySchema}.machineCost (machine cost)
      * @returns {PrepareResponse} Returns the Default response object.
      */
     recalculateAllActivitiesCosts(req, res){
@@ -2160,29 +2128,28 @@ class AreasController {
                         console.log("Before Quantity: "+currentNumberOfTrees);
                         if(allActivities[i].method && allActivities[i].method != '' && allActivities[i].percentage)
                         {
-                            /* Machine cost ~ unitprice2*/
-                            //console.log(allActivities[i].unitPrice2);
-                            let method = await Factory.models.method.findOne({_id: allActivities[i].method}).exec();
-                            if(method.methodUnit == 'pcs'){
-                                allActivities[i].unitPrice2 = method.unitPrice * currentNumberOfTrees*(allActivities[i].percentage/100);
+                            /* Machine cost ~ machineCost*/
+                            //console.log(allActivities[i].machineCost);
+                            if(allActivities[i].methodUnit == 'pcs'){
+                                allActivities[i].machineCost = allActivities[i].methodUnitPrice * currentNumberOfTrees*(allActivities[i].percentage/100);
                             }
-                            else if(method.methodUnit == 'ha'){
-                                allActivities[i].unitPrice2 = method.unitPrice * area.areaSize*(allActivities[i].percentage/100);
+                            else if(allActivities[i].methodUnit == 'ha'){
+                                allActivities[i].machineCost = allActivities[i].methodUnitPrice * area.areaSize*(allActivities[i].percentage/100);
                             }
-                            //console.log(allActivities[i].unitPrice2);
+                            //console.log(allActivities[i].machineCost);
 
                             /* product quantity */
                             if(allActivities[i].activityType == 'spraying' || allActivities[i].activityType == 'fertilizing'){
-                                if(method.methodUnit == "ha")
+                                if(allActivities[i].methodUnit == 'ha')
                                     allActivities[i].quantity = allActivities[i].dose * area.areaSize * (allActivities[i].percentage/100);
-                                else if(method.methodUnit == "pcs")
+                                else if(allActivities[i].methodUnit == "pcs")
                                     allActivities[i].quantity = allActivities[i].dose * currentNumberOfTrees*(allActivities[i].percentage/100);
                             }else{
                                 //alert(currentNumberOfTrees);
                                 //console.log("Now Current NoT: "+currentNumberOfTrees);
-                                if(method.methodUnit == "ha")
+                                if(allActivities[i].methodUnit == "ha")
                                     allActivities[i].quantity = area.areaSize * (allActivities[i].percentage/100);
-                                else if(method.methodUnit == "pcs"){
+                                else if(allActivities[i].methodUnit == "pcs"){
                                     allActivities[i].quantity = currentNumberOfTrees*(allActivities[i].percentage/100);                                    
                                 }
                             }
@@ -2192,10 +2159,10 @@ class AreasController {
 
 
                         /* total cost ~ product total cost */
-                        /* unitPrice1 ~ product unit price */
+                        /* meanCost ~ product unit price */
                         //console.log(allActivities[i].totalCost);
-                        if(allActivities[i].unitPrice1 && allActivities[i].quantity && allActivities[i].percentage)
-                            allActivities[i].totalCost = allActivities[i].unitPrice1 * allActivities[i].quantity * (allActivities[i].percentage/100);
+                        if(allActivities[i].meanCost && allActivities[i].quantity && allActivities[i].percentage)
+                            allActivities[i].totalCost = allActivities[i].meanCost * allActivities[i].quantity * (allActivities[i].percentage/100);
                         //console.log(allActivities[i].totalCost);
                         //new comment added
                         area.activities[i].save();

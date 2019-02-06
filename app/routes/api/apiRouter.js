@@ -4,6 +4,7 @@ module.exports = (router) => {
     // register routes and return router
     let indexController = new (require('./../../controllers/api/indexController'))(),
     auth = {
+        activityController: new (require('./../../controllers/api/auth/activityController'))(),
         areasController: new (require('./../../controllers/api/auth/areasController'))(),
         growthPlansController: new (require('./../../controllers/api/auth/growthPlansController'))(),
         inventoryController: new (require('./../../controllers/api/auth/inventoryController'))(),
@@ -52,8 +53,8 @@ module.exports = (router) => {
     router.post('/auth/user/growth-plans/get-plans', auth.growthPlansController.getPlans);
     router.post('/auth/user/growth-plans/get-plan-activities', auth.growthPlansController.getPlanActivities);
     router.post('/auth/user/growth-plans/get-plan-grouped-activities', auth.growthPlansController.getPlanGroupedActivities);
-    router.post('/auth/user/growth-plans/create-activity', auth.growthPlansController.createActivity);
-    router.post('/auth/user/growth-plans/update-activity', auth.growthPlansController.updateActivity);
+    /* router.post('/auth/user/growth-plans/create-activity', auth.growthPlansController.createActivity);
+    router.post('/auth/user/growth-plans/update-activity', auth.growthPlansController.updateActivity); */
     router.post('/auth/user/growth-plans/update-activity-age', auth.growthPlansController.updateActivityAge);
     router.post('/auth/user/growth-plans/delete-activity', auth.growthPlansController.deleteActivity);
     router.post('/auth/user/growth-plans/get-activity-data', auth.growthPlansController.getActivityData);
@@ -79,6 +80,11 @@ module.exports = (router) => {
     router.post('/auth/user/methods/delete-method', auth.methodsController.deleteMethod);
     router.post('/auth/user/methods/get-methods', auth.methodsController.getMethods);
     router.post('/auth/user/methods/edit-method', auth.methodsController.editMethod);
+
+    router.post('/auth/user/activity/create-activity', auth.activityController.createActivity);
+    router.post('/auth/user/activity/delete-activity', auth.activityController.deleteActivity);
+    router.post('/auth/user/activity/get-activities', auth.activityController.getActivities);
+    router.post('/auth/user/activity/update-activity', auth.activityController.updateActivity);
     
     
     return router;
