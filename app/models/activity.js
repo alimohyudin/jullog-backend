@@ -17,7 +17,7 @@ let baseModel = require('./baseModel');
  * @property {string} dose - 
  * @property {number} quantity - 
  * 
- * @property {number} methodUnit - 
+ * @property {String} methodUnit - 
  * @property {number} methodUnitPrice - 
  * @property {number} methodUnitsPerHour - 
  * @property {number} meanCost - 
@@ -71,7 +71,7 @@ let activitySchema = new baseModel.Schema({
 	dose: { type: String, default: ''},
 	quantity: { type: Number, default: 0},
 	
-	methodUnit: { type: Number, default: 0},
+	methodUnit: { type: String, default: 0},
 	methodUnitPrice: { type: Number, default: 0},
 	methodUnitsPerHour: { type: Number, default: 0},
 

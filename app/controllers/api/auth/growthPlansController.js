@@ -163,7 +163,7 @@ class GrowthPlansController {
                         }))
                     }
 
-                    /* push activity to area */
+                    // push activity to area
                     Factory.models.growthPlan.findOneAndUpdate(
                         { _id: req.body.planId },
                         { "$push": { "activities": newActivity._id } }
@@ -178,20 +178,20 @@ class GrowthPlansController {
                         data: newActivity,
                     }));
 
-                    /* plan.activities.push(newActivity._id);
-                    plan.save(async(err, updatedPlan) => {
-                        if(err){
-                            return res.send(Factory.helpers.prepareResponse({
-                                success: false,
-                                message: req.__('Area for this activity is not updated.'),
-                            }))
-                        }
+                    // plan.activities.push(newActivity._id);
+                    // plan.save(async(err, updatedPlan) => {
+                    //     if(err){
+                    //         return res.send(Factory.helpers.prepareResponse({
+                    //             success: false,
+                    //             message: req.__('Area for this activity is not updated.'),
+                    //         }))
+                    //     }
 
-                        res.send(Factory.helpers.prepareResponse({
-                            message: req.__('Activity Created!'),
-                            data: newActivity,
-                        }));
-                    }) */
+                    //     res.send(Factory.helpers.prepareResponse({
+                    //         message: req.__('Activity Created!'),
+                    //         data: newActivity,
+                    //     }));
+                    // })
                 })
             })
         })
@@ -600,7 +600,6 @@ class GrowthPlansController {
                         }
                         if(plan.activities[i].dose){
                             console.log("Dose: "+plan.activities[i].dose);
-                            console.log("method: "+method);
                             //newActivity['quantity'] = plan.activities[i].dose * area.areaSize;
                             if(plan.activities[i].activityType == 'spraying' || plan.activities[i].activityType == 'fertilizing'){
                                 if(plan.activities[i].methodUnit == "ha"){
@@ -789,7 +788,6 @@ class GrowthPlansController {
                     }
                     if(plan.activities[i].dose){
                         console.log("Dose: "+plan.activities[i].dose);
-                        console.log("method: "+method);
                         //newActivity['quantity'] = plan.activities[i].dose * area.areaSize;
                         if(plan.activities[i].activityType == 'spraying' || plan.activities[i].activityType == 'fertilizing'){
                             if(plan.activities[i].methodUnit == "ha"){
@@ -971,7 +969,6 @@ class GrowthPlansController {
                         }
                         if(activity.dose){
                             console.log("Dose: "+activity.dose);
-                            console.log("method: "+method);
                             //newActivity['quantity'] = activity.dose * area.areaSize;
                             if(activity.activityType == 'spraying' || activity.activityType == 'fertilizing'){
                                 if(activity.methodUnit == "ha"){

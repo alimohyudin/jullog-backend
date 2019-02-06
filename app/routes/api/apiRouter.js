@@ -53,8 +53,8 @@ module.exports = (router) => {
     router.post('/auth/user/growth-plans/get-plans', auth.growthPlansController.getPlans);
     router.post('/auth/user/growth-plans/get-plan-activities', auth.growthPlansController.getPlanActivities);
     router.post('/auth/user/growth-plans/get-plan-grouped-activities', auth.growthPlansController.getPlanGroupedActivities);
-    router.post('/auth/user/growth-plans/create-activity', auth.growthPlansController.createActivity);
-    router.post('/auth/user/growth-plans/update-activity', auth.growthPlansController.updateActivity);
+    /* router.post('/auth/user/growth-plans/create-activity', auth.growthPlansController.createActivity);
+    router.post('/auth/user/growth-plans/update-activity', auth.growthPlansController.updateActivity); */
     router.post('/auth/user/growth-plans/update-activity-age', auth.growthPlansController.updateActivityAge);
     router.post('/auth/user/growth-plans/delete-activity', auth.growthPlansController.deleteActivity);
     router.post('/auth/user/growth-plans/get-activity-data', auth.growthPlansController.getActivityData);

@@ -34,6 +34,7 @@ class ActivityController {
                 userMysqlId: req.USER_MYSQL_ID,
                 areaId: (req.body.areaId) ? req.body.areaId : null,
                 planId: (req.body.planId) ? req.body.planId : null,
+                templateId: (req.body.templateId) ? req.body.templateId : null,
                 activityCategory: req.body.activityCategory,
                 name: (req.body.name) ? req.body.name : '',
 
@@ -137,6 +138,7 @@ class ActivityController {
             var activity = {
 
                 //activityType: req.body.activityType,
+                templateId: (req.body.templateId) ? req.body.templateId : null,
                 name: (req.body.name) ? req.body.name : '',
 
                 methodUnit: (req.body.methodUnit) ? req.body.methodUnit : '',
@@ -188,9 +190,10 @@ class ActivityController {
             // save
             Factory.models.activity.update({_id: req.body.activityId}, activity, async(err, newActivity) => {
                 if(err){
+                    console.log(err)
                     return res.send(Factory.helpers.prepareResponse({
                         success: false,
-                        message: req.__('Something went wrong with creating activity functionality.')
+                        message: req.__('Something went wrong with updating activity functionality.')
                     }))
                 }
 
