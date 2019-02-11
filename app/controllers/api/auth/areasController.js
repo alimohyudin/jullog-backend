@@ -362,7 +362,7 @@ class AreasController {
                 }
                 else{
                     /* update current tree number as well. */
-                    Factory.helpers.calculateAllCurrentTreeNumbers(req.body.areaId);
+                    //Factory.helpers.calculateAllCurrentTreeNumbers(req.body.areaId);
                     /*  */
 
                     res.send(Factory.helpers.prepareResponse({
@@ -772,7 +772,7 @@ class AreasController {
 
                 if(req.body.fieldName == "numberOfTrees"){
                     /* update current tree number as well. */
-                    Factory.helpers.calculateAllCurrentTreeNumbers(req.body.areaId);
+                    //Factory.helpers.calculateAllCurrentTreeNumbers(req.body.areaId);
                     /*  */
                 }
 
@@ -916,7 +916,7 @@ class AreasController {
                 }
 
                 /* update current tree number as well. */
-                Factory.helpers.calculateAllCurrentTreeNumbers(newActivity.areaId);
+                //Factory.helpers.calculateAllCurrentTreeNumbers(newActivity.areaId);
                 /*  */
 
                 res.send(Factory.helpers.prepareResponse({

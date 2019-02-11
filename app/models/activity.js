@@ -100,9 +100,9 @@ let activitySchema = new baseModel.Schema({
 	plantDistance: {type: Number, default: 0},
 	rowDistance: {type: Number, default: 0},
 	trackPercentage: {type: Number, default: 0},
-	provenance: {type: Number, default: 0},
-	plantSize: {type: Number, default: 0},
-	plantAge: {type: Number, default: 0},
+	provenance: {type: String, default: 0},
+	plantSize: {type: String, default: 0},
+	plantAge: {type: String, default: 0},
 	//end
 
 	isQuantityDeducted: {type: Boolean, default: false},

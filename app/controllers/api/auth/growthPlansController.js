@@ -128,8 +128,8 @@ class GrowthPlansController {
                     status:(req.body.status) ? req.body.status : 'Plan',
                     dose: (req.body.dose) ? req.body.dose : '',
                     quantity: (req.body.quantity) ? req.body.quantity : '',
-                    unitPrice1: (req.body.unitPrice1) ? req.body.unitPrice1 : '',
-                    unitPrice2: (req.body.unitPrice2) ? req.body.unitPrice2 : '',
+                    meanCost: (req.body.meanCost) ? req.body.meanCost : '',
+                    machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                     totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                     performedBy: (req.body.performedBy) ? req.body.performedBy : '',
                     contractor: (req.body.contractor) ? req.body.contractor : '',
@@ -228,8 +228,8 @@ class GrowthPlansController {
                 status:(req.body.status) ? req.body.status : 'Plan',
                 dose: (req.body.dose) ? req.body.dose : '',
                 quantity: (req.body.quantity) ? req.body.quantity : '',
-                unitPrice1: (req.body.unitPrice1) ? req.body.unitPrice1 : '',
-                unitPrice2: (req.body.unitPrice2) ? req.body.unitPrice2 : '',
+                meanCost: (req.body.meanCost) ? req.body.meanCost : '',
+                machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy) ? req.body.performedBy : '',
                 contractor: (req.body.contractor) ? req.body.contractor : '',
@@ -590,11 +590,11 @@ class GrowthPlansController {
                         let percentage = plan.activities[i].percentage?plan.activities[i].percentage:100;
                         //console.log(method);
                         if(plan.activities[i].methodUnit == 'ha'){
-                            newActivity['unitPrice2'] = plan.activities[i].unitPrice * area.areaSize * (percentage/100);
+                            newActivity['machineCost'] = plan.activities[i].meanCost * area.areaSize * (percentage/100);
                             if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
                                 newActivity['hoursSpent'] = area.areaSize * (percentage/100) / plan.activities[i].methodUnitsPerHour;
                         }else if(plan.activities[i].methodUnit == 'pcs'){
-                            newActivity['unitPrice2'] = plan.activities[i].unitPrice * area.numberOfTrees * (percentage/100);
+                            newActivity['machineCost'] = plan.activities[i].meanCost * area.numberOfTrees * (percentage/100);
                             if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
                                 newActivity['hoursSpent'] = area.numberOfTrees*(percentage/100) / plan.activities[i].methodUnitsPerHour;
                         }
@@ -620,18 +620,18 @@ class GrowthPlansController {
                                 newActivity['quantity'] = area.numberOfTrees * (percentage/100);
                         }
 
-                        newActivity['totalCost'] = plan.activities[i].unitPrice * newActivity['quantity'] * (percentage/100);
+                        newActivity['totalCost'] = plan.activities[i].meanCost * newActivity['quantity'] * (percentage/100);
 
 
                         console.log("New activity Copied");
                         //console.log(newActivity);
-                        // console.log('here is the unitPrice2: '+newActivity['unitPrice2']);
+                        // console.log('here is the machineCost: '+newActivity['machineCost']);
                         // console.log('here is the quantity: '+newActivity['quantity']);
                         // console.log('here is the total cost: '+newActivity['totalcost']);
                         /*if(plan.activities[i].mean){
                             //console.log(plan.activities[i].mean);
                             let mean = await Factory.models.inventory.populate(plan.activities[i], {path: 'mean'});
-                            newActivity['unitPrice'] = mean.uniPrice * mean.quantity;
+                            newActivity['meanCost'] = mean.uniPrice * mean.quantity;
                         }*/
 
                         if(newActivity['_id'])
@@ -778,11 +778,11 @@ class GrowthPlansController {
                     //console.log(plan.activities[i].method);
                     let percentage = plan.activities[i].percentage?plan.activities[i].percentage:100;
                     if(plan.activities[i].methodUnit == 'ha'){
-                        newActivity['unitPrice2'] = plan.activities[i].unitPrice * area.areaSize * (percentage/100);
+                        newActivity['machineCost'] = plan.activities[i].meanCost * area.areaSize * (percentage/100);
                         if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
                             newActivity['hoursSpent'] = area.areaSize * (percentage/100) / plan.activities[i].methodUnitsPerHour;
                     }else if(plan.activities[i].methodUnit == 'pcs'){
-                        newActivity['unitPrice2'] = plan.activities[i].unitPrice * area.numberOfTrees * (percentage/100);
+                        newActivity['machineCost'] = plan.activities[i].meanCost * area.numberOfTrees * (percentage/100);
                         if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
                             newActivity['hoursSpent'] = area.numberOfTrees*(percentage/100) / plan.activities[i].methodUnitsPerHour;
                     }
@@ -808,17 +808,17 @@ class GrowthPlansController {
                             newActivity['quantity'] = area.numberOfTrees * (percentage/100);
                     }
 
-                    newActivity['totalCost'] = plan.activities[i].unitPrice * newActivity['quantity'] * (percentage/100);
+                    newActivity['totalCost'] = plan.activities[i].meanCost * newActivity['quantity'] * (percentage/100);
 
                     console.log("New Copied Activity: ");
                     console.log(newActivity);
-                    // console.log('here is the unitPrice2: '+newActivity['unitPrice2']);
+                    // console.log('here is the machineCost: '+newActivity['machineCost']);
                     // console.log('here is the quantity: '+newActivity['quantity']);
                     // console.log('here is the total cost: '+newActivity['totalcost']);
                     /*if(plan.activities[i].mean){
                         //console.log(plan.activities[i].mean);
                         let mean = await Factory.models.inventory.populate(plan.activities[i], {path: 'mean'});
-                        newActivity['unitPrice'] = mean.uniPrice * mean.quantity;
+                        newActivity['meanCost'] = mean.uniPrice * mean.quantity;
                     }*/
 
                     if(newActivity['_id'])
@@ -959,11 +959,11 @@ class GrowthPlansController {
                         //console.log(activity.method);
                         let percentage = activity.percentage?activity.percentage:100;
                         if(activity.methodUnit == 'ha'){
-                            newActivity['unitPrice2'] = activity.unitPrice * area.areaSize * (percentage/100);
+                            newActivity['machineCost'] = activity.meanCost * area.areaSize * (percentage/100);
                             if(activity.methodUnitsPerHour && activity.methodUnitsPerHour > 0)
                                 newActivity['hoursSpent'] = area.areaSize * (percentage/100) / activity.methodUnitsPerHour;
                         }else if(activity.methodUnit == 'pcs'){
-                            newActivity['unitPrice2'] = activity.unitPrice * area.numberOfTrees * (percentage/100);
+                            newActivity['machineCost'] = activity.meanCost * area.numberOfTrees * (percentage/100);
                             if(activity.methodUnitsPerHour && activity.methodUnitsPerHour > 0)
                                 newActivity['hoursSpent'] = area.numberOfTrees*(percentage/100) / activity.methodUnitsPerHour;
                         }
@@ -989,18 +989,18 @@ class GrowthPlansController {
                                 newActivity['quantity'] = area.numberOfTrees * (percentage/100);
                         }
 
-                        newActivity['totalCost'] = activity.unitPrice * newActivity['quantity'] * (percentage/100);
+                        newActivity['totalCost'] = activity.meanCost * newActivity['quantity'] * (percentage/100);
 
 
                         console.log("New Copied Activity: ");
                         console.log(newActivity);
-                        // console.log('here is the unitPrice2: '+newActivity['unitPrice2']);
+                        // console.log('here is the machineCost: '+newActivity['machineCost']);
                         // console.log('here is the quantity: '+newActivity['quantity']);
                         // console.log('here is the total cost: '+newActivity['totalcost']);
                         /*if(plan.activities[i].mean){
                             //console.log(plan.activities[i].mean);
                             let mean = await Factory.models.inventory.populate(plan.activities[i], {path: 'mean'});
-                            newActivity['unitPrice'] = mean.uniPrice * mean.quantity;
+                            newActivity['meanCost'] = mean.uniPrice * mean.quantity;
                         }*/
 
                         if(newActivity['_id'])

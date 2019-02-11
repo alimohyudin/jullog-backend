@@ -26,7 +26,7 @@ mongoose.Promise = global.Promise;
 //mongoose.connect('mongodb://213.136.72.86:27017/tender-app');
 //mongoose.connect('mongodb://173.212.224.132:27017/tender-app');
 //mongoose.connect('mongodb://mongo/tender-app');
-mongoose.connect('mongodb://127.0.0.1:27017/tender-app');
+mongoose.connect('mongodb://127.0.0.1:27017/tender-app', { useNewUrlParser: true });
 let models = require('./models/db'),
 validators = require('./util/validators'),
 Factory = require('./util/factory');

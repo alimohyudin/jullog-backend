@@ -1,5 +1,48 @@
 let Factory = require('../../../util/factory');
 
+class ActivityHelper {
+    recalculateNumberOfTrees(areaId){
+        Factory.models.area.findOne({_id: areaId})
+        .populate('activities')
+        .exec(async(err, area)=>{
+            if(err){
+                return;
+            }
+
+            
+            //console.log(area); */
+            let allActivities = area.activities;
+
+            allActivities.sort(function(a,b){
+                // Turn your strings into dates, and then subtract them
+                // to get a value that is either negative, positive, or zero.
+                return new Date(a.dateCompleted) - new Date(b.dateCompleted);
+                });
+            //area.activities.toObject();
+            console.log(allActivities);
+            /* let currentNumberOfTrees = area.numberOfTrees*1; */
+            /* BIG CHANGE: start with zero */
+            let currentNumberOfTrees = 0;
+            console.log("Current Number of Trees:"+currentNumberOfTrees);
+
+            for (var i = 0; i < allActivities.length; i++) {
+                /* calculate current number of trees */
+                if(allActivities[i].activityType == 'harvest' || allActivities[i].activityType == 'scrap')
+                    currentNumberOfTrees -= allActivities[i].quantity;
+                else if(allActivities[i].activityType == 'planting')
+                    currentNumberOfTrees += allActivities[i].quantity;
+
+                console.log("After Quantity: "+currentNumberOfTrees);
+                console.log("Updated");
+            }
+            area.currentNumberOfTrees = currentNumberOfTrees;
+            area.numberOfTrees = currentNumberOfTrees;
+            area.save();
+            
+        })
+        return;
+    }
+}
 /**
  * ActivityController
  * @class
@@ -97,14 +140,30 @@ class ActivityController {
                 }
 
                 /* push activity to area */
-                Factory.models.area.findOneAndUpdate(
-                    { _id: req.body.areaId },
-                    { "$push": { "activities": newActivity._id } }
-                ).exec(async(err, updatedArea)=>{
-                    if(err){
-                        console.log(err);
-                    }
-                });
+                if(req.body.areaId)
+                {
+                    Factory.models.area.findOneAndUpdate(
+                        { _id: req.body.areaId },
+                        { "$push": { "activities": newActivity._id } }
+                    ).exec(async(err, updatedArea)=>{
+                        if(err){
+                            console.log(err);
+                        }
+                        if(req.body.activityType == "harvest" || req.body.activityType == "scrap" || req.body.activityType == "planting")
+                            (new ActivityHelper()).recalculateNumberOfTrees(req.body.areaId);
+                    });
+                }
+                else if(req.body.planId)
+                {
+                    Factory.models.growthPlan.findOneAndUpdate(
+                        { _id: req.body.planId },
+                        { "$push": { "activities": newActivity._id } }
+                    ).exec(async(err, updatedArea)=>{
+                        if(err){
+                            console.log(err);
+                        }
+                    });
+                }
 
                 res.send(Factory.helpers.prepareResponse({
                     message: req.__('activity Created!'),
@@ -198,8 +257,11 @@ class ActivityController {
                 }
 
                 /* update current tree number as well. */
-                Factory.helpers.calculateAllCurrentTreeNumbers(newActivity.areaId);
+                //Factory.helpers.calculateAllCurrentTreeNumbers(newActivity.areaId);
                 /*  */
+                if(newActivity.activityCategory == 'area')
+                    if(newActivity.activityType == "harvest" || newActivity.activityType == "scrap" || newActivity.activityType == "planting")
+                        (new ActivityHelper()).recalculateNumberOfTrees(newActivity.areaId);
 
                 res.send(Factory.helpers.prepareResponse({
                     message: req.__('Activity Updated!'),
