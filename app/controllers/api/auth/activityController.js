@@ -63,8 +63,8 @@ class ActivityController {
         req.checkBody('activityType', 'activityType is required').required();
         req.checkBody('activityCategory', req.__('activityCategory is required')).required();
 
-        if(req.body.activityType == "spraying" || req.body.activityType == "fertilizer")
-            req.checkBody('mean', 'mean is required').required();
+        // if(req.body.activityType == "spraying" || req.body.activityType == "fertilizer")
+        //     req.checkBody('mean', 'mean is required').required();
 
         req.getValidationResult().then(async(result) => {
             if(!result.isEmpty()){
@@ -97,8 +97,8 @@ class ActivityController {
                 scheduledDate: (req.body.scheduledDate) ? req.body.scheduledDate : '',
                 dateCompleted: (req.body.dateCompleted) ? req.body.dateCompleted : '',
                 status:(req.body.status) ? req.body.status : 'Plan',
-                dose: (req.body.dose) ? req.body.dose : '',
-                quantity: (req.body.quantity) ? req.body.quantity : '',
+                // dose: (req.body.dose) ? req.body.dose : '',
+                // quantity: (req.body.quantity) ? req.body.quantity : '',
                 meanCost: (req.body.meanCost) ? req.body.meanCost : '',
                 machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
@@ -128,8 +128,15 @@ class ActivityController {
                 updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
             };
 
-            if(req.body.mean)
+            if(req.body.mean){
                 activity['mean'] = req.body.mean;
+                activity['meanName'] = req.body.meanName;
+                activity['meanUnitPrice'] = req.body.meanUnitPrice;
+                activity['meanDose'] = req.body.meanDose;
+                activity['meanQuantity'] = req.body.meanQuantity;
+                activity['meanUnit'] = req.body.meanUnit;
+                activity['meanTotalQuantity'] = req.body.meanTotalQuantity;
+            }
             // save
             Factory.models.activity(activity).save(async(err, newActivity) => {
                 if(err){
@@ -214,8 +221,8 @@ class ActivityController {
                 scheduledDate: (req.body.scheduledDate) ? req.body.scheduledDate : '',
                 dateCompleted: (req.body.dateCompleted) ? req.body.dateCompleted : '',
                 status:(req.body.status) ? req.body.status : 'Plan',
-                dose: (req.body.dose) ? req.body.dose : '',
-                quantity: (req.body.quantity) ? req.body.quantity : '',
+                // dose: (req.body.dose) ? req.body.dose : '',
+                // quantity: (req.body.quantity) ? req.body.quantity : '',
                 meanCost: (req.body.meanCost) ? req.body.meanCost : '',
                 machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
@@ -243,8 +250,15 @@ class ActivityController {
                 updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
             }
 
-            if(req.body.mean && req.body.mean != '')
+            if(req.body.mean){
                 activity['mean'] = req.body.mean;
+                activity['meanName'] = req.body.meanName;
+                activity['meanUnitPrice'] = req.body.meanUnitPrice;
+                activity['meanDose'] = req.body.meanDose;
+                activity['meanQuantity'] = req.body.meanQuantity;
+                activity['meanUnit'] = req.body.meanUnit;
+                activity['meanTotalQuantity'] = req.body.meanTotalQuantity;
+            }
 
             // save
             Factory.models.activity.update({_id: req.body.activityId}, activity, async(err, newActivity) => {
@@ -288,6 +302,8 @@ class ActivityController {
             where.activityCategory = req.body.activityCategory
         if(req.body.activityType)
             where.activityType = req.body.activityType
+        if(req.body.areaId)
+            where.areaId = req.body.areaId
         
         where.deletedAt = null;
 

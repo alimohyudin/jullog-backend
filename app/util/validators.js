@@ -26,6 +26,7 @@ module.exports = {
     required: (param, file) => {
         if (param) {
             //it won't work if same parameter is sent twice as request.
+            //or if its an array
             //console.log(param);
             let value = param.trim();
             return value.length > 0;
