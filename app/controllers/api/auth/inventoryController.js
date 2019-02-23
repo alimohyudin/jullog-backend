@@ -160,7 +160,11 @@ class InventoryController {
             PER_PAGE_PRODUCTS = 500;
         }
         else if(req.body.activityType){
-            let productType = (req.body.activityType == 'fertilizing')?'fertilizer':'pesticide';
+            let productType = 'fertilizer';
+            if(req.body.activityType == 'spraying'){
+                productType = {$in: ['fertilizer', 'pesticide']}
+            }
+            //let productType = (req.body.activityType == 'fertilizing')?'fertilizer':'pesticide';
             
             where = {userMysqlId: req.USER_MYSQL_ID, type: productType};
             PER_PAGE_PRODUCTS = 500;
@@ -497,15 +501,18 @@ class InventoryController {
 
                 for (let i = 0; i < result.length; i++) {
                     const activity = result[i];
-                    if(activity.mean && activity.mean != ""){
-                        if(activity.mean._id in plannedProducts){
-                            plannedProducts[activity.mean._id]['plannedQuantity'] += activity.quantity;
-                        }else{
-                            let mean = {};//JSON.parse(JSON.stringify(activity.mean));
-                            mean['quantity'] = activity.mean.quantity;
-                            mean['plannedQuantity'] = activity.quantity;
-                            plannedProducts[activity.mean._id] = mean;
-                            //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                    if(activity.mean && activity.mean.length > 0){
+                        for (let j = 0; j < activity.mean.length; j++) {
+                            const myMean = activity.mean[j];
+                            if(myMean._id in plannedProducts){
+                                plannedProducts[myMean._id]['plannedQuantity'] += activity.meanQuantity[j];
+                            }else{
+                                let mean = {};//JSON.parse(JSON.stringify(activity.mean));
+                                mean['quantity'] = myMean.quantity;
+                                mean['plannedQuantity'] = activity.meanQuantity[j];
+                                plannedProducts[myMean._id] = mean;
+                                //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                            }
                         }
                     }
                 }
@@ -624,7 +631,7 @@ class InventoryController {
                     ]
                 };
 
-                console.log(areaIdFilter);
+                console.log(match);
             
             //get all areas populate
             //let allProducts = await Factory.models.inventory.findOne({userMysqlId: req.USER_MYSQL_ID}).exec();
@@ -651,33 +658,46 @@ class InventoryController {
 
                 for (let i = 0; i < result.length; i++) {
                     const activity = result[i];
-                    if(activity.areaId && activity.areaId != "" && activity.mean && activity.mean != ""){
+                    if(activity.areaId && activity.areaId != "" && activity.mean && activity.mean.length > 0){
                         if(activity.areaId._id in plannedAreas){
-                            if(activity.mean.nitrogen && activity.mean.quantity){
-                                plannedAreas[activity.areaId._id]['nitrogen'] += activity.mean.nitrogen/100 * activity.quantity;
-                                plannedAreas[activity.areaId._id]['phosphorus'] += activity.mean.phosphorus/100 * activity.quantity;
+                            for (let j = 0; j < activity.mean.length; j++) {
+                                const myMean = activity.mean[j];
+                                if(myMean.nitrogen){
+                                    plannedAreas[activity.areaId._id]['nitrogen'] += myMean.nitrogen/100 * activity.meanQuantity[j];
+                                }
+                                if(myMean.phosphorus){
+                                    plannedAreas[activity.areaId._id]['phosphorus'] += myMean.phosphorus/100 * activity.meanQuantity[j];
+                                }
                             }
                             console.log("\n\nif: "+activity.areaId._id)
-                            console.log(activity.mean.nitrogen)
-                            console.log(activity.quantity)
-                            console.log(activity.mean.phosphorus)
+                            console.log(activity.mean)
+                            console.log(activity.meanQuantity)
                             console.log(plannedAreas[activity.areaId._id])
                         }else{
-                            let mean = {};//JSON.parse(JSON.stringify(activity.mean));
-                            if(activity.mean.nitrogen && activity.mean.quantity){
-                                mean['nitrogen'] = activity.mean.nitrogen/100 * activity.quantity;
-                                mean['phosphorus'] = activity.mean.phosphorus/100 * activity.quantity;
+                            let mean = {nitrogen: 0, phosphorus: 0};//JSON.parse(JSON.stringify(activity.mean));
+                            for (let j = 0; j < activity.mean.length; j++) {
+                                const myMean = activity.mean[j];
+                                if(myMean.nitrogen){
+                                    mean['nitrogen'] += myMean.nitrogen/100 * activity.meanQuantity[j];
+                                }
+                                if(myMean.phosphorus){
+                                    mean['phosphorus'] += myMean.phosphorus/100 * activity.meanQuantity[j];
+                                }
+                            }
+                            /* if(activity.mean.nitrogen && activity.mean.quantity){
+                                mean['nitrogen'] = activity.mean.nitrogen/100 * activity.meanTotalQuantity;
+                                mean['phosphorus'] = activity.mean.phosphorus/100 * activity.meanTotalQuantity;
                             } else {
                                 mean['nitrogen'] = 0;
                                 mean['phosphorus'] = 0;
-                            }
+                            } */
                             plannedAreas[activity.areaId._id] = mean;
-                            //plannedAreas[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                            //plannedAreas[activity.mean._id]['plannedQuantity'] = activity.meanTotalQuantity;
                             console.log("\n\nelse: "+activity.areaId._id)
                             
-                            console.log(activity.mean.nitrogen)
-                            console.log(activity.mean.phosphorus)
-                            console.log(activity.quantity)
+                            console.log("\n\nif: "+activity.areaId._id)
+                            console.log(activity.mean)
+                            console.log(activity.meanQuantity)
                             console.log(plannedAreas[activity.areaId._id])
                         }
                     }
@@ -820,7 +840,6 @@ class InventoryController {
 
           Factory.models.activity.find(match)
           .populate({path: 'areaId', select: '_id areaName areaSize farmFieldId', model: Factory.models.area})
-          .populate('mean')
           .exec(async(err, allProducts)=>{
               if(err){
                   return res.send(Factory.helpers.prepareResponse({

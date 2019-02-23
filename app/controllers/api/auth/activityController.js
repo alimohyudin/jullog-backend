@@ -11,7 +11,7 @@ class ActivityHelper {
 
             
             //console.log(area); */
-            let allActivities = area.activities;
+            let allActivities = await Factory.models.activity.find({areaId: areaId}).exec();
 
             allActivities.sort(function(a,b){
                 // Turn your strings into dates, and then subtract them
@@ -28,9 +28,9 @@ class ActivityHelper {
             for (var i = 0; i < allActivities.length; i++) {
                 /* calculate current number of trees */
                 if(allActivities[i].activityType == 'harvest' || allActivities[i].activityType == 'scrap')
-                    currentNumberOfTrees -= allActivities[i].quantity;
+                    currentNumberOfTrees -= allActivities[i].meanTotalQuantity*1;
                 else if(allActivities[i].activityType == 'planting')
-                    currentNumberOfTrees += allActivities[i].quantity;
+                    currentNumberOfTrees += allActivities[i].meanTotalQuantity*1;
 
                 console.log("After Quantity: "+currentNumberOfTrees);
                 console.log("Updated");
@@ -41,6 +41,84 @@ class ActivityHelper {
             
         })
         return;
+    }
+    getActivitiesFilters(req){
+        let where = {userMysqlId: req.USER_MYSQL_ID};
+
+        if(req.body.activityId)
+            where._id = req.body.activityId
+        if(req.body.activityCategory && req.body.activityCategory !== '')
+            where.activityCategory = req.body.activityCategory
+        if(req.body.activityType)
+            where.activityType = req.body.activityType
+        if(req.body.status)
+            where.status = req.body.status
+        
+        if(req.body.areaId)
+            where.areaId = req.body.areaId
+        else if(req.body.allAreasActivities)
+            where.areaId = {$ne: null}
+        
+        where.deletedAt = null;
+
+        /**
+         * Date Fast Filter
+         */
+        if(req.body.dateFastFilter || req.body.fromDate || req.body.toDate){
+            let now = new Date();
+
+            let fromDate = (req.body.fromDate)? new Date(req.body.fromDate) : new Date(now.getFullYear()+"-01-01");
+            let toDate = (req.body.toDate)? new Date(req.body.toDate) : new Date(now.getFullYear()+"-12-31");
+
+            let dateCompleted = {};
+            if(req.body.fromDate && req.body.toDate)
+                dateCompleted = { $gte: fromDate, $lt: toDate};
+            else if(req.body.toDate)
+                dateCompleted = { $lt: toDate};
+            else if(req.body.fromDate)
+                dateCompleted = { $gte: fromDate};
+            
+            where.dateCompleted = dateCompleted;
+        }
+
+
+            /* let areaIdFilter = {};
+            if(req.body.areaId)
+                areaIdFilter = {'areaId': {$eq: req.body.areaId}};
+            else
+                areaIdFilter = {'areaId': {$ne: null}};
+
+            let statusFilter = {};
+            if(req.body.status && req.body.status != '')
+                statusFilter = {'status': {$eq: req.body.status}};
+            else
+                statusFilter = {'status': {$ne: null}};
+
+            let activityTypeFilter = {};
+            if(req.body.activityType && req.body.activityType != '')
+                activityTypeFilter = {'activityType': req.body.activityType};
+                
+            let freeTextSearchFilter = {};
+            if(req.body.freeTextSearch && req.body.freeTextSearch != ''){
+                freeTextSearchFilter = {
+                    $text: { $search: req.body.freeTextSearch.toLowerCase() }
+                }
+            }
+            match = {
+                $and: [
+                    {userMysqlId: req.USER_MYSQL_ID},
+                    dateFilter,
+                    areaIdFilter,
+                    statusFilter,
+                    activityTypeFilter,
+                    freeTextSearchFilter
+                ]
+            }; */
+        /**
+         * End
+         */
+        console.log(where)
+        return where;
     }
 }
 /**
@@ -95,11 +173,12 @@ class ActivityController {
                 activityType: req.body.activityType,
                 scheduledMonth: (req.body.scheduledMonth) ? req.body.scheduledMonth : '',
                 scheduledDate: (req.body.scheduledDate) ? req.body.scheduledDate : '',
-                dateCompleted: (req.body.dateCompleted) ? req.body.dateCompleted : '',
+                dateCompleted: (req.body.dateCompleted) ? new Date((new Date(req.body.dateCompleted)).getTime() + (1*60*60*1000)) : '',
                 status:(req.body.status) ? req.body.status : 'Plan',
                 // dose: (req.body.dose) ? req.body.dose : '',
                 // quantity: (req.body.quantity) ? req.body.quantity : '',
                 meanCost: (req.body.meanCost) ? req.body.meanCost : '',
+                meanTotalQuantity: (req.body.meanTotalQuantity) ? req.body.meanTotalQuantity: 0,
                 machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy) ? req.body.performedBy : '',
@@ -219,11 +298,12 @@ class ActivityController {
 
                 scheduledMonth: (req.body.scheduledMonth) ? req.body.scheduledMonth : '',
                 scheduledDate: (req.body.scheduledDate) ? req.body.scheduledDate : '',
-                dateCompleted: (req.body.dateCompleted) ? req.body.dateCompleted : '',
+                dateCompleted: (req.body.dateCompleted) ? new Date((new Date(req.body.dateCompleted)).getTime() + (1*60*60*1000)) : '',
                 status:(req.body.status) ? req.body.status : 'Plan',
                 // dose: (req.body.dose) ? req.body.dose : '',
                 // quantity: (req.body.quantity) ? req.body.quantity : '',
                 meanCost: (req.body.meanCost) ? req.body.meanCost : '',
+                meanTotalQuantity: (req.body.meanTotalQuantity) ? req.body.meanTotalQuantity: 0,
                 machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy) ? req.body.performedBy : '',
@@ -273,9 +353,12 @@ class ActivityController {
                 /* update current tree number as well. */
                 //Factory.helpers.calculateAllCurrentTreeNumbers(newActivity.areaId);
                 /*  */
-                if(newActivity.activityCategory == 'area')
-                    if(newActivity.activityType == "harvest" || newActivity.activityType == "scrap" || newActivity.activityType == "planting")
+                if(newActivity.activityCategory == 'area'){
+                    if(newActivity.activityType == "harvest" || newActivity.activityType == "scrap" || newActivity.activityType == "planting"){
                         (new ActivityHelper()).recalculateNumberOfTrees(newActivity.areaId);
+                    }
+                    // check if this activity is not missed 
+                }
 
                 res.send(Factory.helpers.prepareResponse({
                     message: req.__('Activity Updated!'),
@@ -293,22 +376,13 @@ class ActivityController {
      * @returns {PrepareResponse|ActivitySchema|Pagination} Returns the Default response object.  With `data` object containing activities and pagination
      */
     getActivities(req, res){
-        let where = {userMysqlId: req.USER_MYSQL_ID};
+        
         let PER_PAGE_ACTIVITIES = Factory.env.PER_PAGE.ACTIVITIES;
 
-        if(req.body.activityId)
-            where._id = req.body.activityId
-        if(req.body.activityCategory && req.body.activityCategory !== '')
-            where.activityCategory = req.body.activityCategory
-        if(req.body.activityType)
-            where.activityType = req.body.activityType
-        if(req.body.areaId)
-            where.areaId = req.body.areaId
-        
-        where.deletedAt = null;
+        let where = (new ActivityHelper()).getActivitiesFilters(req);
 
-        Factory.models.activity.count(where, (err, count) => {
-            let page = Math.abs(req.body.page);
+        Factory.models.activity.countDocuments(where, (err, count) => {
+            let page = ( req.query.page && req.query.page > 0)?Math.abs(req.query.page):1;
             let pagination = {
                 total: count,
                 pages: Math.ceil(count / PER_PAGE_ACTIVITIES),
@@ -326,14 +400,14 @@ class ActivityController {
                 .skip(skip)
                 .exec(async(err, activities) => {
                     if (err) {
-                        //console.log(err);
-                        res.send(Factory.helpers.prepareResponse({
+                        console.error(err);
+                        return res.send(Factory.helpers.prepareResponse({
                             success: false,
                             message: req.__("Something went wrong, try later"),
                         }));
                     }
                     if (!activities || activities.length <= 0) {
-                        res.send(Factory.helpers.prepareResponse({
+                        return res.send(Factory.helpers.prepareResponse({
                             success: true,
                             message: req.__("No activity found"),
                             data: {
@@ -343,19 +417,32 @@ class ActivityController {
                         }));
                     }
                     else {
-                        res.send(Factory.helpers.prepareResponse({
+                        if(req.body.populateAreaNames){
+                            activities = await Factory.models.area.populate(activities, {path: 'areaId', select: 'areaName'});
+                        }
+                        let extras = {};
+                        if(req.body.calculateAllCosts){
+                            let aggregation = [
+                                { $match: where},
+                                {$group:{"_id":null, totalCost: {$sum:"$totalCost"}, machineCost: {$sum:"$machineCost"}, hoursSpent: {$sum:"$hoursSpent"}}}
+                            ];
+                            extras = await Factory.models.activity.aggregate(aggregation);
+                            extras = extras[0]
+                        }
+                        return res.send(Factory.helpers.prepareResponse({
                             success: true,
                             message: req.__("Activities found"),
                             data: {
                                 activities: activities,
                                 pagination: pagination,
+                                extras: extras
                             }
                         }));
                     }
                 });
             }
             else {
-                res.send(Factory.helpers.prepareResponse({
+                return res.send(Factory.helpers.prepareResponse({
                     message: req.__("No activity found"),
                     data: {
                         activities: [],

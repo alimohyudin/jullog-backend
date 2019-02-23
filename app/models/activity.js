@@ -68,6 +68,7 @@ let activitySchema = new baseModel.Schema({
 	scheduledMonth: {type: String, default: ''},
 	scheduledDate: {type: Date, default: ''},
 	dateCompleted: {type: Date, default: ''},
+	dateCompletedTimeZoneOffest: {type: Number, default: 0},
 	status:{type: String, default: 'Plan'},
 	
 	mean:[{type:String, ref: 'Inventory'}],
