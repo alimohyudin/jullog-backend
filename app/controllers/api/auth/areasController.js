@@ -487,7 +487,7 @@ class AreasController {
         Factory.models.area.find({
             userMysqlId: req.USER_MYSQL_ID
         })
-        .populate({path: 'activities'})
+        //.populate({path: 'activities'})
         .exec(async(err, areas) =>{
             if(err){
                 return res.send(Factory.helpers.prepareResponse({
@@ -498,8 +498,9 @@ class AreasController {
 
             let result = [];
             for (let i = 0; i < areas.length; i++) {
-                const thisArea = areas[i];
+                let thisArea = areas[i];
                 
+                thisArea.activities = await Factory.models.activity.find({areaId: thisArea._id}).exec();
                 
                 /**
                  * calculate age
@@ -523,12 +524,12 @@ class AreasController {
 
                     let dateCompleted = new Date(thisActivity.dateCompleted);
                     let nowDate = new Date();
-                    if(thisActivity.dateCompleted && thisActivity.quantity && dateCompleted.getTime() <= nowDate.getTime()){
+                    if(thisActivity.dateCompleted && thisActivity.meanTotalQuantity && dateCompleted.getTime() <= nowDate.getTime()){
                         
                         if(thisActivity.activityType == 'planting')
-                            totalTrees += thisActivity.quantity;
+                            totalTrees += thisActivity.meanTotalQuantity*1;
                         else if(thisActivity.activityType == 'harvest' || thisActivity.activityType == 'scrap')
-                            totalTrees -= thisActivity.quantity;
+                            totalTrees -= thisActivity.meanTotalQuantity*1;
                     }
                 }
 
@@ -1427,14 +1428,20 @@ class AreasController {
                 if(req.body.activityType && req.body.activityType != '')
                     activityTypeFilter = {'activityType': req.body.activityType};
                     
-
+                let freeTextSearchFilter = {};
+                if(req.body.freeTextSearch && req.body.freeTextSearch != ''){
+                    freeTextSearchFilter = {
+                        $text: { $search: req.body.freeTextSearch.toLowerCase() }
+                    }
+                }
                 match = {
                     $and: [
                         {userMysqlId: req.USER_MYSQL_ID},
                         dateFilter,
                         areaIdFilter,
                         statusFilter,
-                        activityTypeFilter
+                        activityTypeFilter,
+                        freeTextSearchFilter
                     ]
                 };
 
@@ -1458,11 +1465,11 @@ class AreasController {
                 
                 if(req.body.freeTextSearch && req.body.freeTextSearch != ''){
                     for(let index = 0; index < result.length; index++){
-                        let key2 = result[index];
+                        let tempActivity = result[index];
                         if(
-                            (key2.mean && key2.mean.name && key2.mean.name.toLowerCase().includes(req.body.freeTextSearch.toLowerCase())) ||
-                            (key2.performedBy && key2.performedBy.toLowerCase().includes(req.body.freeTextSearch.toLowerCase())) ||
-                            (key2.contractor && key2.contractor.toLowerCase().includes(req.body.freeTextSearch.toLowerCase()))
+                            (tempActivity.mean && tempActivity.mean.name && tempActivity.mean.name.toLowerCase().includes(req.body.freeTextSearch.toLowerCase())) ||
+                            (tempActivity.performedBy && tempActivity.performedBy.toLowerCase().includes(req.body.freeTextSearch.toLowerCase())) ||
+                            (tempActivity.contractor && tempActivity.contractor.toLowerCase().includes(req.body.freeTextSearch.toLowerCase()))
                         ){
                             console.log("not deleting: "+index);
                         }
@@ -1926,14 +1933,25 @@ class AreasController {
                         message: req.__("Quantity is already deducted!")
                     }))
                 }
+                
+                for (let j = 0; j < activity.mean.length; j++) {
+                    const element = activity.mean[j];
+                    activity.mean[j].quantity = activity.mean[j].quantity*1 - activity.meanQuantity[j]*1;
+                    activity.mean[j].save();
+                }
 
-                activity.mean.quantity = (activity.mean.quantity*1 - activity.quantity*1);
-                activity.isQuantityDeducted = true;
+                //activity.mean.quantity = (activity.mean.quantity*1 - activity.quantity*1);
+                /* activity.isQuantityDeducted = true;
                 if(req.body.statusDateToggle) {
                   activity.status = 'Udført';
                   activity.dateCompleted = new Date();
-                }
-                activity.mean.save();
+                } */
+                activity.isQuantityDeducted = true;
+                if(req.body.status)
+                    activity.status = req.body.status
+                if(req.body.dateCompleted)
+                    activity.dateCompleted = new Date((new Date(req.body.dateCompleted)).getTime() + (1*60*60*1000))
+                
                 activity.save();
                 
                 return res.send(Factory.helpers.prepareResponse({
@@ -1975,11 +1993,8 @@ class AreasController {
 
                 activity.status = req.body.status;
 
-                if(req.body.status == "Udført"){
-                    activity.dateCompleted = (req.body.date)?req.body.date:'';
-                }
-                else if(req.body.status == "Plan"){
-                    activity.scheduledDate = (req.body.date)?req.body.date:'';
+                if(req.body.dateCompleted){
+                    activity.dateCompleted = new Date((new Date(req.body.dateCompleted)).getTime() + (1*60*60*1000));
                 }
 
                 activity.save();
@@ -2008,7 +2023,7 @@ class AreasController {
                 }))
             }
             Factory.models.area.findOne({_id: req.body.areaId})
-            .populate('activities')
+            //.populate('activities')
             .exec(async(err, area)=>{
                 if(err){
                     return res.send(Factory.helpers.prepareResponse({
@@ -2016,10 +2031,15 @@ class AreasController {
                         message: req.__('something went wrong.')
                     }))
                 }
-
+                if(area == null){
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('Area not found')
+                    }))
+                }
                 
                 //console.log(area); */
-                let allActivities = area.activities;
+                let allActivities = await Factory.models.activity.find({areaId: req.body.areaId}, null, {sort: {'dateCompleted': 1}}).exec();
 
                 allActivities.sort(function(a,b){
                     // Turn your strings into dates, and then subtract them
@@ -2042,19 +2062,21 @@ class AreasController {
                         /* calculate current number of trees as well */
                         if(allActivities[i].activityType == 'harvest'){
                             //currentNumberOfTrees -= allActivities[i].quantity;
-                            harvestTrees += allActivities[i].quantity;
+                            harvestTrees += allActivities[i].meanTotalQuantity*1;
                         }
                         else if(allActivities[i].activityType == 'planting'){
                             //currentNumberOfTrees += allActivities[i].quantity;
-                            plantedTrees += allActivities[i].quantity;
+                            plantedTrees += allActivities[i].meanTotalQuantity*1;
                         }
                         
                         
-                        totalCost += allActivities[i].totalCost + allActivities[i].machineCost;
+                        totalCost += allActivities[i].totalCost*1;
 
                         console.log("After Quantity: "+currentNumberOfTrees);
                         console.log("Updated");
                     }
+                    console.log("harvest Trees: "+ harvestTrees)
+                    console.log("planted Trees: "+ harvestTrees)
                 }
                 //area.save();
 
@@ -2090,6 +2112,14 @@ class AreasController {
                     message: req.__(result.array()[0].msg)
                 }))
             }
+
+            await Factory.helpers.recalculateAllActivitiesCost(req.body.areaId);
+            return res.send(Factory.helpers.prepareResponse({
+                message: req.__('Activities costs updated.'),
+                data: {}
+            }))
+            
+
             Factory.models.area.findOne({_id: req.body.areaId})
             .populate('activities')
             .exec(async(err, area)=>{
@@ -2126,9 +2156,69 @@ class AreasController {
                     {
                         console.log("Updating");
                         console.log("Before Quantity: "+currentNumberOfTrees);
-                        if(allActivities[i].method && allActivities[i].method != '' && allActivities[i].percentage)
+
+                        let percentage = (allActivities[i].percentage)?allActivities[i].percentage:100;
+                        allActivities[i]['meanQuantity'] =  [];
+                        allActivities[i]['meanTotalQuantity'] = 0;
+                        allActivities[i]['meanCost'] = 0;
+
+                        if(allActivities[i].activityType == 'spraying' || allActivities[i].activityType == 'fertilizing'){
+                            if(allActivities[i].mean && allActivities[i].mean.length > 0){
+                                for (let j = 0; j < allActivities[i].mean.length; j++) {
+                                    const element = allActivities[i].mean[j];
+                                    if(allActivities[i].methodUnit == "ha"){
+                                        allActivities[i]['meanQuantity'][j] = (allActivities[i].meanDose[j]*area.areaSize*(percentage/100)).toFixed(2);
+                                    } else if(allActivities[i].methodUnit == "pcs"){
+                                        allActivities[i]['meanQuantity'][j] = (allActivities[i].meanDose[j]*currentNumberOfTrees*(percentage/100)).toFixed(2);
+                                    } else {
+                                        allActivities[i]['meanQuantity'][j] = 0;
+                                    }
+                                    allActivities[i]['meanTotalQuantity'] += allActivities[i]['meanQuantity'][j]*1;
+                                    allActivities[i]['meanCost'] += allActivities[i]['meanQuantity'][j]*allActivities[i].meanUnitPrice[j]
+                                }
+                            }
+                        }
+                        else if(allActivities[i].activityType == 'planting'){
+                            //type=plantning; the qty field= (10.000/(rowdistance xplantdistance)) x trackpercentage x area size
+                            if(allActivities[i].rowDistance > 0 && allActivities[i].plantDistance > 0)
+                                allActivities[i]['meanTotalQuantity'] = (( (10000 / (allActivities[i].rowDistance * allActivities[i].plantDistance) ) * area.areaSize * (1 - allActivities[i].trackPercentage/100))).toFixed(2);
+                            else
+                                allActivities[i]['meanTotalQuantity'] = (currentNumberOfTrees*(percentage/100)).toFixed(2);
+                        }
+                        else {
+                            if(allActivities[i].methodUnit == "ha")
+                                allActivities[i]['meanTotalQuantity'] = (area.areaSize*(percentage/100)).toFixed(2);
+                            else if(allActivities[i].methodUnit == "pcs")
+                                allActivities[i]['meanTotalQuantity'] = (currentNumberOfTrees*(percentage/100)).toFixed(2);
+                        }
+
+                        /* calculate current number of trees as well */
+                        if(allActivities[i].activityType == 'harvest' || allActivities[i].activityType == 'scrap')
+                            currentNumberOfTrees -= allActivities[i].meanTotalQuantity;
+                        else if(allActivities[i].activityType == 'planting')
+                            currentNumberOfTrees += allActivities[i].meanTotalQuantity;
+
+                        //calculate machine cost
+                        if(allActivities[i].methodUnit == 'ha'){
+                            //allActivities[i]['machineCost'] = allActivities[i].meanCost * area.areaSize * (percentage/100);
+                            allActivities[i]['machineCost'] = (allActivities[i].methodUnitPrice * area.areaSize*(percentage/100)).toFixed(2);
+                            if(allActivities[i].methodUnitsPerHour && allActivities[i].methodUnitsPerHour > 0)
+                                allActivities[i]['hoursSpent'] = area.areaSize * (percentage/100) / allActivities[i].methodUnitsPerHour;
+                        }else if(allActivities[i].methodUnit == 'pcs'){
+                            allActivities[i]['machineCost'] = (allActivities[i].methodUnitPrice * allActivities[i].meanTotalQuantity*(percentage/100)).toFixed(2);
+                            if(allActivities[i].methodUnitsPerHour && allActivities[i].methodUnitsPerHour > 0)
+                                allActivities[i]['hoursSpent'] = allActivities[i].meanTotalQuantity*(percentage/100) / allActivities[i].methodUnitsPerHour;
+                        }
+                        
+                        //calculate total cost
+                        allActivities[i]['totalCost'] = allActivities[i]['meanCost']*1 + allActivities[i]['machineCost']*1;
+
+
+                        
+
+                        /* if(allActivities[i].method && allActivities[i].method != '' && allActivities[i].percentage)
                         {
-                            /* Machine cost ~ machineCost*/
+                            // Machine cost ~ machineCost
                             //console.log(allActivities[i].machineCost);
                             if(allActivities[i].methodUnit == 'pcs'){
                                 allActivities[i].machineCost = allActivities[i].methodUnitPrice * currentNumberOfTrees*(allActivities[i].percentage/100);
@@ -2138,7 +2228,7 @@ class AreasController {
                             }
                             //console.log(allActivities[i].machineCost);
 
-                            /* product quantity */
+                            // product quantity
                             if(allActivities[i].activityType == 'spraying' || allActivities[i].activityType == 'fertilizing'){
                                 if(allActivities[i].methodUnit == 'ha')
                                     allActivities[i].quantity = allActivities[i].dose * area.areaSize * (allActivities[i].percentage/100);
@@ -2158,11 +2248,11 @@ class AreasController {
                         
 
 
-                        /* total cost ~ product total cost */
-                        /* meanCost ~ product unit price */
+                        // total cost ~ product total cost
+                        // meanCost ~ product unit price
                         //console.log(allActivities[i].totalCost);
                         if(allActivities[i].meanCost && allActivities[i].quantity && allActivities[i].percentage)
-                            allActivities[i].totalCost = allActivities[i].meanCost * allActivities[i].quantity * (allActivities[i].percentage/100);
+                            allActivities[i].totalCost = allActivities[i].meanCost * allActivities[i].quantity * (allActivities[i].percentage/100); */
                         //console.log(allActivities[i].totalCost);
                         //new comment added
                         area.activities[i].save();
@@ -2171,9 +2261,9 @@ class AreasController {
 
                     /* calculate current number of trees as well */
                     if(allActivities[i].activityType == 'harvest' || allActivities[i].activityType == 'scrap')
-                        currentNumberOfTrees -= allActivities[i].quantity;
+                        currentNumberOfTrees -= allActivities[i].meanTotalQuantity;
                     else if(allActivities[i].activityType == 'planting')
-                        currentNumberOfTrees += allActivities[i].quantity;
+                        currentNumberOfTrees += allActivities[i].meanTotalQuantity;
 
                     console.log("After Quantity: "+currentNumberOfTrees);
                     console.log("Updated");

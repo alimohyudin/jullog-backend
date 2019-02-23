@@ -60,6 +60,7 @@ let activitySchema = new baseModel.Schema({
 	userMysqlId: {type: Number, required: true},
 	areaId: {type: String, ref:'area'},
 	planId: {type: String, ref:'growthplan'},
+	templateId: {type: String, ref:'activity'},
 	activityCategory: {type: String, enum: ['area', 'plan', 'template'], required: true},
 
 	name: {type: String, default: ''},
@@ -67,9 +68,18 @@ let activitySchema = new baseModel.Schema({
 	scheduledMonth: {type: String, default: ''},
 	scheduledDate: {type: Date, default: ''},
 	dateCompleted: {type: Date, default: ''},
+	dateCompletedTimeZoneOffest: {type: Number, default: 0},
 	status:{type: String, default: 'Plan'},
-	dose: { type: String, default: ''},
-	quantity: { type: Number, default: 0},
+	
+	mean:[{type:String, ref: 'Inventory'}],
+	meanName:[{type:String, default: ''}],
+	meanUnitPrice: [{ type: Number, default: 0}],
+	meanDose: [{ type: Number, default: 0}],
+	meanQuantity: [{ type: Number, default: 0}],
+	meanUnit: [{ type: String, default: 0}],
+	meanTotalQuantity: { type: Number, default: 0},
+
+	
 	
 	methodUnit: { type: String, default: 0},
 	methodUnitPrice: { type: Number, default: 0},
@@ -89,9 +99,6 @@ let activitySchema = new baseModel.Schema({
 	wind: { type: String, default: ''},
 	temperature: { type: String, default: ''},
 	weather: { type: String, default: ''},
-
-	mean:{type:String, ref: 'Inventory'},
-	method:{type:String, ref: 'Method'},
 	
 	ageYear: {type: Number, default: 0},
 	ageMonth: {type: Number, default: 1},
