@@ -1,7 +1,7 @@
 let bcrypt = require('bcrypt-nodejs'),
 Factory = require('../../../util/factory');
 
-module.exports = class UsersController {
+class UsersController {
 
     constructor() {}
 
@@ -656,3 +656,5 @@ module.exports = class UsersController {
     }
 
 }
+
+module.exports = UsersController

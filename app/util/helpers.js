@@ -7,7 +7,7 @@ Factory = require('../util/factory'),
 Bandwidth = require('node-bandwidth'),
 sharp = require('sharp');
 
-module.exports = class Helpers {
+class Helpers {
     
     constructor() { }
 
@@ -296,7 +296,29 @@ module.exports = class Helpers {
             }
         });
     }
+    /**
+     * @typedef Pagination
+     * @property {Number} total - Total count of items
+     * @property {Number} pages - Total pages
+     * @property {Number} per_page -  Per page items
+     * @property {Number} page  - current page number
+     */
 
+    /**
+     * @typedef HttpResponse
+     * @property {Boolean} success
+     * @property {String} message
+     * @property {Object} data
+     * @property {Pagination} pagination
+     * @property {Object} extras
+     */
+
+    /**
+     * Default HTTP Response
+     * @function PrepareResponse
+     * @param {Object} content 
+     * @return {HttpResponse}
+     */
     prepareResponse(content) {
         let response = {
             success: true,
@@ -462,9 +484,9 @@ module.exports = class Helpers {
         let totalInitialTrees = numberOfTrees;
         for (let i = 0; i < thisTimeSeries.length; i++) {
             const element = thisTimeSeries[i];
-            //element.calculatedTreeNumber = totalInitialTrees - element.quantity;
-            totalInitialTrees -= element.quantity;
-            console.log("quantity: "+element.quantity);
+            //element.calculatedTreeNumber = totalInitialTrees - element.meanTotalQuantity;
+            totalInitialTrees -= element.meanTotalQuantity;
+            console.log("quantity: "+element.meanTotalQuantity);
             console.log("now total: "+ totalInitialTrees);
         }
 
@@ -538,20 +560,20 @@ module.exports = class Helpers {
                 
                 const subElement = thisTimeSeries[i];
                 if(!subElement.dateCompleted){
-                    continue;
+                    subElement.dateCompleted = new Date(1970);
                 }
 
                 console.log("activity type: "+subElement.activityType);
-                console.log("quantity: "+subElement.quantity);
+                console.log("quantity: "+subElement.meanTotalQuantity);
                 console.log("now total: "+ totalInitialTrees);
 
                 if(subElement.activityType != 'planting')
-                    totalInitialTrees -= subElement.quantity;
+                    totalInitialTrees -= subElement.meanTotalQuantity;
                 else
-                    totalInitialTrees += subElement.quantity;
+                    totalInitialTrees += subElement.meanTotalQuantity;
 
 
-                console.log("quantity: "+subElement.quantity);
+                console.log("quantity: "+subElement.meanTotalQuantity);
                 console.log("now total: "+ totalInitialTrees);
 
                 retVal[i] = {dateCompleted: subElement.dateCompleted, numberOfTrees: totalInitialTrees};
@@ -564,4 +586,125 @@ module.exports = class Helpers {
         console.log(retVal)
         return retVal;
     }
+
+    /**
+     * Re calculate costs for All Activities under an area 
+     */
+    async recalculateAllActivitiesCost(areaId){
+        await Factory.models.area.findOne({_id: areaId})
+        //.populate('activities')
+        .then(async (area)=>{
+            
+            //console.log(area); */
+            //let allActivities = area.activities;
+            let allActivities = await Factory.models.activity.find({areaId: areaId}, null, {sort: {'dateCompleted': 1}}).exec();
+
+            allActivities.sort(function(a,b){
+                // Turn your strings into dates, and then subtract them
+                // to get a value that is either negative, positive, or zero.
+                return new Date(a.dateCompleted) - new Date(b.dateCompleted);
+                });
+            //area.activities.toObject();
+            console.log(allActivities);
+            /* let currentNumberOfTrees = area.numberOfTrees*1; */
+            /* BIG CHANGE: start with zero */
+            let currentNumberOfTrees = 0;
+            console.log("Current Number of Trees:"+currentNumberOfTrees);
+
+            for (var i = 0; i < allActivities.length; i++) {
+
+                if(allActivities[i].autoUpdate == false || allActivities[i].status == 'Udført')
+                {
+                    //ignore if autoupdate has false value, but if it is not added in database then perform else condition
+                    if(allActivities[i].activityType == 'harvest' || allActivities[i].activityType == 'scrap')
+                        currentNumberOfTrees -= allActivities[i].meanTotalQuantity*1;
+                    else if(allActivities[i].activityType == 'planting')
+                        currentNumberOfTrees += allActivities[i].meanTotalQuantity*1;
+                }
+                else
+                {
+                    console.log("Updating");
+                    console.log("Before Quantity: "+currentNumberOfTrees);
+
+                    let percentage = allActivities[i].percentage;
+                    allActivities[i]['meanQuantity'] =  [];
+                    allActivities[i]['meanTotalQuantity'] = 0;
+                    allActivities[i]['meanCost'] = 0;
+                    //calculate product quantity
+                    //calculate mean cost
+                    if(allActivities[i].activityType == 'spraying' || allActivities[i].activityType == 'fertilizing'){
+                        if(allActivities[i].mean && allActivities[i].mean.length > 0){
+                            for (let j = 0; j < allActivities[i].mean.length; j++) {
+                                const element = allActivities[i].mean[j];
+                                if(allActivities[i].methodUnit == "ha"){
+                                    allActivities[i]['meanQuantity'][j] = (allActivities[i].meanDose[j]*area.areaSize*(percentage/100)).toFixed(2);
+                                } else if(allActivities[i].methodUnit == "pcs"){
+                                    allActivities[i]['meanQuantity'][j] = (allActivities[i].meanDose[j]*currentNumberOfTrees*(percentage/100)).toFixed(2);
+                                } else {
+                                    allActivities[i]['meanQuantity'][j] = 0;
+                                }
+                                allActivities[i]['meanTotalQuantity'] += allActivities[i]['meanQuantity'][j]*1;
+                                allActivities[i]['meanCost'] += allActivities[i]['meanQuantity'][j]*allActivities[i].meanUnitPrice[j]
+                            }
+                        }
+                    }
+                    else if(allActivities[i].activityType == 'planting'){
+                        //type=plantning; the qty field= (10.000/(rowdistance xplantdistance)) x trackpercentage x area size
+                        if(allActivities[i].rowDistance > 0 && allActivities[i].plantDistance > 0)
+                            allActivities[i]['meanTotalQuantity'] = (( (10000 / (allActivities[i].rowDistance * allActivities[i].plantDistance) ) * area.areaSize * (1 - allActivities[i].trackPercentage/100))).toFixed(2);
+                        else
+                            allActivities[i]['meanTotalQuantity'] = (currentNumberOfTrees*(percentage/100)).toFixed(2);
+                    }
+                    else {
+                        if(allActivities[i].methodUnit == "ha")
+                            allActivities[i]['meanTotalQuantity'] = (area.areaSize*(percentage/100)).toFixed(2);
+                        else if(allActivities[i].methodUnit == "pcs")
+                            allActivities[i]['meanTotalQuantity'] = (currentNumberOfTrees*(percentage/100)).toFixed(2);
+                    }
+
+                    /* calculate current number of trees as well */
+                    if(allActivities[i].activityType == 'harvest' || allActivities[i].activityType == 'scrap')
+                        currentNumberOfTrees -= allActivities[i].meanTotalQuantity*1;
+                    else if(allActivities[i].activityType == 'planting')
+                        currentNumberOfTrees += allActivities[i].meanTotalQuantity*1;
+
+                    //calculate machine cost
+                    if(allActivities[i].methodUnit == 'ha'){
+                        //allActivities[i]['machineCost'] = allActivities[i].meanCost * area.areaSize * (percentage/100);
+                        allActivities[i]['machineCost'] = (allActivities[i].methodUnitPrice * area.areaSize*(percentage/100)).toFixed(2);
+                        if(allActivities[i].methodUnitsPerHour && allActivities[i].methodUnitsPerHour > 0)
+                            allActivities[i]['hoursSpent'] = area.areaSize * (percentage/100) / allActivities[i].methodUnitsPerHour;
+                    }else if(allActivities[i].methodUnit == 'pcs'){
+                        allActivities[i]['machineCost'] = (allActivities[i].methodUnitPrice * allActivities[i].meanTotalQuantity*(percentage/100)).toFixed(2);
+                        if(allActivities[i].methodUnitsPerHour && allActivities[i].methodUnitsPerHour > 0)
+                            allActivities[i]['hoursSpent'] = allActivities[i].meanTotalQuantity*(percentage/100) / allActivities[i].methodUnitsPerHour;
+                    }
+                    
+                    //calculate total cost
+                    allActivities[i]['totalCost'] = allActivities[i]['meanCost']*1 + allActivities[i]['machineCost']*1;
+                    
+                    let Activity = Factory.models.activity;
+                    var newActivity = new Activity(allActivities[i]);
+
+                    await newActivity.save().then(function(saved){
+                        console.log(saved)
+                        console.log('activity saved')
+                    });
+                    
+                }
+
+                console.log("After Quantity: "+currentNumberOfTrees);
+                console.log("Updated");
+            }
+            //return "done";
+            console.log("done")
+        }, function (err){
+            if(err){
+                console.error(err)
+                //return "not done";
+            }
+        })
+    }
 }
+
+module.exports = Helpers

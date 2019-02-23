@@ -1,9 +1,24 @@
 let Factory = require('../../../util/factory');
 
-module.exports = class InventoryController {
+/**
+ * InventoryController
+ * @class
+ */
+class InventoryController {
 
     constructor() {}
-
+    /**
+     * Creates new Product
+     * @function
+     * @param {String} productName
+     * @param {String} type - [fertilizer, pesticide, material]
+     * @param {InventorySchema} FormData
+     * @description Creates Plan under a user referenced to Mysql Database using token.<br>
+     * Field: req.USER_MYSQL_ID
+     * If req.USER_MYSQL_ID == 1 then store userMysqlType: 'admin' for admin products to be separated
+     * else 'customer'
+     * @returns {PrepareResponse} Returns the Default response object. With `data` object having {@link InventorySchema}
+     */
     createProduct(req, res){
         req.checkBody('name', 'name is required.').required();
         req.checkBody('type', 'type is required.').required();
@@ -70,7 +85,14 @@ module.exports = class InventoryController {
             })
         });
     }
-
+    /**
+     * Delete Product
+     * @function
+     * @param {String} productId {@link InventorySchema}._id
+     * @description Delete product
+     * @todo and also handle linked activities to this product
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     deleteProduct(req, res){
         req.checkBody('productId', 'productId is required').required();
         req.getValidationResult().then(async(result) =>{
@@ -116,7 +138,12 @@ module.exports = class InventoryController {
 
         });
     }
-
+    /**
+     * Get products with pagination
+     * @function
+     * @description Its using token to get userMysqlId stored in req.USER_MYSQL_ID.
+     * @returns {PrepareResponse|InventorySchema|Pagination} Returns the Default response object.  With `data` object containing Products
+     */
     getProducts(req, res){
         let where = {userMysqlId: req.USER_MYSQL_ID};
         let PER_PAGE_PRODUCTS = Factory.env.PER_PAGE.PRODUCTS;
@@ -133,7 +160,11 @@ module.exports = class InventoryController {
             PER_PAGE_PRODUCTS = 500;
         }
         else if(req.body.activityType){
-            let productType = (req.body.activityType == 'fertilizing')?'fertilizer':'pesticide';
+            let productType = 'fertilizer';
+            if(req.body.activityType == 'spraying'){
+                productType = {$in: ['fertilizer', 'pesticide']}
+            }
+            //let productType = (req.body.activityType == 'fertilizing')?'fertilizer':'pesticide';
             
             where = {userMysqlId: req.USER_MYSQL_ID, type: productType};
             PER_PAGE_PRODUCTS = 500;
@@ -198,7 +229,15 @@ module.exports = class InventoryController {
             }
         });
     }
-
+    /**
+     * Update Product
+     * @function
+     * @param {InventorySchema} Form_Data
+     * @param {String} ProductId {@link InventorySchema}._id
+     * @param {String} type {@link InventorySchema}.type
+     * @description update Product
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     editProduct(req, res){
         req.checkBody('productId', 'productId is required').required();
         req.checkBody('name', 'name is required.').required();
@@ -240,7 +279,14 @@ module.exports = class InventoryController {
             })
         });
     }
-
+    /**
+     * Update Product Nutrients
+     * @function
+     * @param {InventorySchema} Form_Data
+     * @param {String} ProductId {@link InventorySchema}._id
+     * @description update Product
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     editProductNutrients(req, res){
         req.checkBody('productId', 'productId is required').required();
 
@@ -285,7 +331,15 @@ module.exports = class InventoryController {
             })
         });
     }
-    
+    /**
+     * Update Product quantity
+     * @function
+     * @param {String} ProductId {@link InventorySchema}._id
+     * @param {Number} Quantity {@link InventorySchema}.quantity
+     * @description update Product quantity
+     * @todo Change to updateProductField() and getProductFieldValue() to reduce other functions
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     editProductQuantity(req, res){
         req.checkBody('productId', 'productId is required').required();
         req.checkBody('quantity', 'quantity is required').required();
@@ -317,6 +371,15 @@ module.exports = class InventoryController {
             })
         });
     }
+    /**
+     * Update Product unitPrice
+     * @function
+     * @param {String} ProductId {@link InventorySchema}._id
+     * @param {Number} UnitPrice {@link InventorySchema}.unitPrice
+     * @description update Product unitPrice
+     * @todo Change to updateProductField() and getProductFieldValue() to reduce other functions
+     * @returns {PrepareResponse} Returns the Default response object.
+     */
     editProductUnitPrice(req, res){
         req.checkBody('productId', 'productId is required').required();
         req.checkBody('unitPrice', 'unitPrice is required').required();
@@ -348,7 +411,17 @@ module.exports = class InventoryController {
             })
         });
     }
-
+    /**
+     * Get expenditures overview with pagination
+     * @function
+     * @param {Date} [fromDate] {@link ActivitySchema}.dateCompleted
+     * @param {Date} [toDate] {@link ActivitySchema}.dateCompleted
+     * @param {String} [areaId] {@link AreaSchema}._id
+     * @param {String} [status] {@link ActivitySchema}.status
+     * @param {String} [activityType] {@link ActivitySchema}.activityType
+     * @description Expenditures = used materials for selected period
+     * @returns {PrepareResponse|InventorySchema|Pagination} Returns the Default response object.  With `data` object containing Products
+     */
     getExpenditures(req, res){
         req.getValidationResult().then(async(result) =>{
             let match = {}, aggregation = [], where=[];
@@ -428,15 +501,18 @@ module.exports = class InventoryController {
 
                 for (let i = 0; i < result.length; i++) {
                     const activity = result[i];
-                    if(activity.mean && activity.mean != ""){
-                        if(activity.mean._id in plannedProducts){
-                            plannedProducts[activity.mean._id]['plannedQuantity'] += activity.quantity;
-                        }else{
-                            let mean = {};//JSON.parse(JSON.stringify(activity.mean));
-                            mean['quantity'] = activity.mean.quantity;
-                            mean['plannedQuantity'] = activity.quantity;
-                            plannedProducts[activity.mean._id] = mean;
-                            //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                    if(activity.mean && activity.mean.length > 0){
+                        for (let j = 0; j < activity.mean.length; j++) {
+                            const myMean = activity.mean[j];
+                            if(myMean._id in plannedProducts){
+                                plannedProducts[myMean._id]['plannedQuantity'] += activity.meanQuantity[j];
+                            }else{
+                                let mean = {};//JSON.parse(JSON.stringify(activity.mean));
+                                mean['quantity'] = myMean.quantity;
+                                mean['plannedQuantity'] = activity.meanQuantity[j];
+                                plannedProducts[myMean._id] = mean;
+                                //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                            }
                         }
                     }
                 }
@@ -496,8 +572,17 @@ module.exports = class InventoryController {
         });
         
     }
-
-
+    
+    /**
+     * Get fertilizer with pagination
+     * @function
+     * @param {Date} [fromDate] {@link ActivitySchema}.dateCompleted
+     * @param {Date} [toDate] {@link ActivitySchema}.dateCompleted
+     * @param {String} [areaId] {@link AreaSchema}._id
+     * @param {String} [status] {@link AreaSchema}.status @default 
+     * @description  = Total of a single Nutrient / {@link AreaSchema}.areaSize 
+     * @returns {PrepareResponse|InventorySchema|Pagination} Returns the Default response object.  With `data` object containing Products
+     */
     getFertilizerOverview(req, res){
         req.getValidationResult().then(async(result) =>{
             let match = {}, aggregation = [], where=[];
@@ -546,7 +631,7 @@ module.exports = class InventoryController {
                     ]
                 };
 
-                console.log(areaIdFilter);
+                console.log(match);
             
             //get all areas populate
             //let allProducts = await Factory.models.inventory.findOne({userMysqlId: req.USER_MYSQL_ID}).exec();
@@ -573,33 +658,46 @@ module.exports = class InventoryController {
 
                 for (let i = 0; i < result.length; i++) {
                     const activity = result[i];
-                    if(activity.areaId && activity.areaId != "" && activity.mean && activity.mean != ""){
+                    if(activity.areaId && activity.areaId != "" && activity.mean && activity.mean.length > 0){
                         if(activity.areaId._id in plannedAreas){
-                            if(activity.mean.nitrogen && activity.mean.quantity){
-                                plannedAreas[activity.areaId._id]['nitrogen'] += activity.mean.nitrogen/100 * activity.quantity;
-                                plannedAreas[activity.areaId._id]['phosphorus'] += activity.mean.phosphorus/100 * activity.quantity;
+                            for (let j = 0; j < activity.mean.length; j++) {
+                                const myMean = activity.mean[j];
+                                if(myMean.nitrogen){
+                                    plannedAreas[activity.areaId._id]['nitrogen'] += myMean.nitrogen/100 * activity.meanQuantity[j];
+                                }
+                                if(myMean.phosphorus){
+                                    plannedAreas[activity.areaId._id]['phosphorus'] += myMean.phosphorus/100 * activity.meanQuantity[j];
+                                }
                             }
                             console.log("\n\nif: "+activity.areaId._id)
-                            console.log(activity.mean.nitrogen)
-                            console.log(activity.quantity)
-                            console.log(activity.mean.phosphorus)
+                            console.log(activity.mean)
+                            console.log(activity.meanQuantity)
                             console.log(plannedAreas[activity.areaId._id])
                         }else{
-                            let mean = {};//JSON.parse(JSON.stringify(activity.mean));
-                            if(activity.mean.nitrogen && activity.mean.quantity){
-                                mean['nitrogen'] = activity.mean.nitrogen/100 * activity.quantity;
-                                mean['phosphorus'] = activity.mean.phosphorus/100 * activity.quantity;
+                            let mean = {nitrogen: 0, phosphorus: 0};//JSON.parse(JSON.stringify(activity.mean));
+                            for (let j = 0; j < activity.mean.length; j++) {
+                                const myMean = activity.mean[j];
+                                if(myMean.nitrogen){
+                                    mean['nitrogen'] += myMean.nitrogen/100 * activity.meanQuantity[j];
+                                }
+                                if(myMean.phosphorus){
+                                    mean['phosphorus'] += myMean.phosphorus/100 * activity.meanQuantity[j];
+                                }
+                            }
+                            /* if(activity.mean.nitrogen && activity.mean.quantity){
+                                mean['nitrogen'] = activity.mean.nitrogen/100 * activity.meanTotalQuantity;
+                                mean['phosphorus'] = activity.mean.phosphorus/100 * activity.meanTotalQuantity;
                             } else {
                                 mean['nitrogen'] = 0;
                                 mean['phosphorus'] = 0;
-                            }
+                            } */
                             plannedAreas[activity.areaId._id] = mean;
-                            //plannedAreas[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                            //plannedAreas[activity.mean._id]['plannedQuantity'] = activity.meanTotalQuantity;
                             console.log("\n\nelse: "+activity.areaId._id)
                             
-                            console.log(activity.mean.nitrogen)
-                            console.log(activity.mean.phosphorus)
-                            console.log(activity.quantity)
+                            console.log("\n\nif: "+activity.areaId._id)
+                            console.log(activity.mean)
+                            console.log(activity.meanQuantity)
                             console.log(plannedAreas[activity.areaId._id])
                         }
                     }
@@ -662,7 +760,18 @@ module.exports = class InventoryController {
         });
         
     }
-
+    /**
+     * Get Products Journal with pagination
+     * @function
+     * @param {Date} [fromDate] {@link ActivitySchema}.dateCompleted
+     * @param {Date} [toDate] {@link ActivitySchema}.dateCompleted
+     * @param {String} [areaId] {@link AreaSchema}._id
+     * @param {String} [activityType] {@link ActivitySchema}.activityType
+     * @param {String} [status] {@link AreaSchema}.status
+     * @default status = Udført and {@link ActivitySchema}.mean != null
+     * @description Fertlizer overview = Total of a single Nutrient / {@link AreaSchema}.areaSize 
+     * @returns {PrepareResponse|InventorySchema|Pagination} Returns the Default response object.  With `data` object containing Products
+     */
     getProductsJournal(req, res){
       req.getValidationResult().then(async(result) =>{
           let match = {}, aggregation = [], where=[];
@@ -731,7 +840,6 @@ module.exports = class InventoryController {
 
           Factory.models.activity.find(match)
           .populate({path: 'areaId', select: '_id areaName areaSize farmFieldId', model: Factory.models.area})
-          .populate('mean')
           .exec(async(err, allProducts)=>{
               if(err){
                   return res.send(Factory.helpers.prepareResponse({
@@ -789,3 +897,5 @@ module.exports = class InventoryController {
       
   }
 }
+
+module.exports = InventoryController
