@@ -120,6 +120,75 @@ class ActivityHelper {
         console.log(where)
         return where;
     }
+    async updateFavoriteLinkedActivities(id, req){
+        var activity = {
+
+            name: (req.body.name) ? req.body.name : '',
+
+            methodUnit: (req.body.methodUnit) ? req.body.methodUnit : '',
+            methodUnitPrice: (req.body.methodUnitPrice) ?  req.body.methodUnitPrice: 0,
+            methodUnitsPerHour: (req.body.methodUnitsPerHour) ? req.body.methodUnitsPerHour: 0,
+            plantDistance: (req.body.plantDistance) ? req.body.plantDistance : 0,
+            rowDistance: (req.body.rowDistance) ? req.body.rowDistance : 0,
+            trackPercentage: (req.body.trackPercentage) ? req.body.trackPercentage : 0,
+            provenance: (req.body.provenance) ? req.body.provenance : 0,
+            plantSize: (req.body.plantSize) ? req.body.plantSize : 0,
+            plantAge: (req.body.plantAge) ? req.body.plantAge : 0,
+
+            performedBy: (req.body.performedBy) ? req.body.performedBy : '',
+            contractor: (req.body.contractor) ? req.body.contractor : '',
+            purpose: (req.body.purpose) ? req.body.purpose : '',
+            reported: (req.body.reported) ? req.body.reported : '',
+            notes: (req.body.notes) ? req.body.notes : '',
+
+            weatherCondition: (req.body.weatherCondition) ? req.body.weatherCondition : '',
+            wind: (req.body.wind) ? req.body.wind : '',
+            temperature: (req.body.temperature) ? req.body.temperature : '',
+            weather: (req.body.weather) ? req.body.weather : '',
+            
+            // ageYear: (req.body.ageYear) ? req.body.ageYear : 0,
+            // ageMonth: (req.body.ageMonth) ? req.body.ageMonth : 1,
+            
+            percentageOfTrees: (req.body.percentageOfTrees) ? req.body.percentageOfTrees: 0,
+            //sellingPricePerUnit: (req.body.sellingPricePerUnit) ? req.body.sellingPricePerUnit: 0,
+
+            percentage: (req.body.percentage)? req.body.percentage: 100,
+            //autoUpdate: (req.body.autoUpdate)? req.body.autoUpdate : false,
+            
+            updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
+        }
+
+        if(req.body.mean){
+            activity['mean'] = req.body.mean;
+            activity['meanName'] = req.body.meanName;
+            activity['meanUnitPrice'] = req.body.meanUnitPrice;
+            activity['meanDose'] = req.body.meanDose;
+            //activity['meanQuantity'] = req.body.meanQuantity;
+            activity['meanUnit'] = req.body.meanUnit;
+            //activity['meanTotalQuantity'] = req.body.meanTotalQuantity;
+        }
+
+        let bulkOp = Factory.models.activity.collection.initializeOrderedBulkOp();
+
+        bulkOp.find({templateId: id.toString(), autoUpdate: true}).update({ $set: activity});
+        await bulkOp.execute( function (err){
+            if(err)
+                console.error(err);
+        });
+        // if(req.body.mean){
+            let aggregation = [
+                { $match: {templateId: id.toString(), autoUpdate: true}},
+                {$group:{"_id":"$areaId", count:{$sum:1}}}
+            ];
+            console.log(aggregation)
+            let areaIds = await Factory.models.activity.aggregate(aggregation).exec();
+            for (let index = 0; index < areaIds.length; index++) {
+                const areaId = areaIds[index];
+                if(areaId)
+                    await Factory.helpers.recalculateAllActivitiesCost(areaId)
+            }
+        //}
+    }
 }
 /**
  * ActivityController
@@ -201,7 +270,7 @@ class ActivityController {
 
                 percentage: (req.body.percentage)? req.body.percentage: 100,
 
-                autoUpdate: (req.body.autoUpdate)? req.body.autoUpdate : false,
+                autoUpdate: (req.body.autoUpdate)? req.body.autoUpdate : true,
 
                 createdAt: (req.body.createdAt) ? req.body.createdAt: new Date(),
                 updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
@@ -283,7 +352,7 @@ class ActivityController {
             var activity = {
 
                 //activityType: req.body.activityType,
-                templateId: (req.body.templateId) ? req.body.templateId : null,
+                //templateId: (req.body.templateId) ? req.body.templateId : null,
                 name: (req.body.name) ? req.body.name : '',
 
                 methodUnit: (req.body.methodUnit) ? req.body.methodUnit : '',
@@ -325,7 +394,7 @@ class ActivityController {
                 sellingPricePerUnit: (req.body.sellingPricePerUnit) ? req.body.sellingPricePerUnit: 0,
 
                 percentage: (req.body.percentage)? req.body.percentage: 100,
-                autoUpdate: (req.body.autoUpdate)? req.body.autoUpdate : false,
+                autoUpdate: (req.body.autoUpdate)? req.body.autoUpdate : true,
                 
                 updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
             }
@@ -341,7 +410,7 @@ class ActivityController {
             }
 
             // save
-            Factory.models.activity.update({_id: req.body.activityId}, activity, async(err, newActivity) => {
+            Factory.models.activity.findOneAndUpdate({_id: req.body.activityId}, activity, { "new": true }, async(err, newActivity) => {
                 if(err){
                     console.log(err)
                     return res.send(Factory.helpers.prepareResponse({
@@ -353,10 +422,14 @@ class ActivityController {
                 /* update current tree number as well. */
                 //Factory.helpers.calculateAllCurrentTreeNumbers(newActivity.areaId);
                 /*  */
-                if(newActivity.activityCategory == 'area'){
-                    if(newActivity.activityType == "harvest" || newActivity.activityType == "scrap" || newActivity.activityType == "planting"){
-                        (new ActivityHelper()).recalculateNumberOfTrees(newActivity.areaId);
-                    }
+                // if(newActivity.activityCategory == 'area'){
+                //     if(newActivity.activityType == "harvest" || newActivity.activityType == "scrap" || newActivity.activityType == "planting"){
+                //         (new ActivityHelper()).recalculateNumberOfTrees(newActivity.areaId);
+                //     }
+                //     // check if this activity is not missed 
+                // }
+                if(newActivity.activityCategory == 'template'){
+                    await (new ActivityHelper()).updateFavoriteLinkedActivities(newActivity._id, req);
                     // check if this activity is not missed 
                 }
 

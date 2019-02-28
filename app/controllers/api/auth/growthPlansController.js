@@ -550,7 +550,7 @@ class GrowthPlansController {
                     console.log("id: "+allActivities[i]._id)
                     console.log(allActivities[i].status);
 
-                    if(allActivities[i].status == "Plan" || allActivities[i].status == "Plannd")
+                    if(allActivities[i].strategyId && (allActivities[i].status == "Plan" || allActivities[i].status == "Plannd"))
                     {
                         await Factory.models.activity.findOneAndRemove({_id: allActivities[i]._id}).then((result, err) => {
                             if(err){
@@ -615,6 +615,7 @@ class GrowthPlansController {
                         newActivity['scheduledDate'] = newDate;
                         newActivity['dateCompleted'] = newDate;
                         newActivity['areaId'] = area._id;
+                        newActivity['activityCategory'] = 'area';
                         newActivity['createdAt'] = new Date();
                         newActivity['updatedAt'] = new Date();
 
@@ -678,10 +679,9 @@ class GrowthPlansController {
 
                         console.log("New activity Copied");
 
+                        newActivity['strategyId'] = newActivity['_id'];
                         if(newActivity['_id'])
                             delete newActivity['_id'];
-                        if(newActivity['planId'])
-                            delete newActivity['planId'];
 
                         ////console.log(newActivity);
                         //area.activities.push(plan.activities[i]);
@@ -769,7 +769,7 @@ class GrowthPlansController {
                     for (var i = 0; i < allActivities.length; i++) {
                         console.log(allActivities[i].status);
 
-                        if(allActivities[i].status == "Plan" || allActivities[i].status == "Plannd")
+                        if(allActivities[i].strategyId && (allActivities[i].status == "Plan" || allActivities[i].status == "Plannd"))
                         {
                             console.log("DELETING");
                             await Factory.models.activity.findOneAndRemove({_id: allActivities[i]._id}).exec();
@@ -827,6 +827,7 @@ class GrowthPlansController {
                             newActivity['scheduledDate'] = newDate;
                             newActivity['dateCompleted'] = newDate;
                             newActivity['areaId'] = singleArea._id;
+                            newActivity['activityCategory'] = 'area';
                             newActivity['createdAt'] = new Date();
                             newActivity['updatedAt'] = new Date();
 
@@ -894,10 +895,9 @@ class GrowthPlansController {
                                 newActivity['meanCost'] = mean.uniPrice * mean.quantity;
                             }*/
 
+                            newActivity['strategyId'] = newActivity['_id'];
                             if(newActivity['_id'])
                                 delete newActivity['_id'];
-                            if(newActivity['planId'])
-                                delete newActivity['planId'];
 
                             ////console.log(newActivity);
                             //area.activities.push(plan.activities[i]);
