@@ -185,7 +185,7 @@ class ActivityHelper {
             for (let index = 0; index < areaIds.length; index++) {
                 const areaId = areaIds[index];
                 if(areaId)
-                    await Factory.helpers.recalculateAllActivitiesCost(areaId)
+                    await Factory.helpers.recalculateAllActivitiesCost(areaId, req)
             }
         //}
     }

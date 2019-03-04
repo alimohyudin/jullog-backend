@@ -715,7 +715,7 @@ class GrowthPlansController {
                     }))
                 }
             }).then(async function(){
-                await Factory.helpers.recalculateAllActivitiesCost(req.body.areaId)
+                await Factory.helpers.recalculateAllActivitiesCost(req.body.areaId, req)
 
                 return res.send(Factory.helpers.prepareResponse({
                     message: req.__('Plan copied'),
@@ -925,7 +925,7 @@ class GrowthPlansController {
                             });   
                         }
                     }
-                    await Factory.helpers.recalculateAllActivitiesCost(singleArea._id)
+                    await Factory.helpers.recalculateAllActivitiesCost(singleArea._id, req)
                 }
             
             }, function (err){

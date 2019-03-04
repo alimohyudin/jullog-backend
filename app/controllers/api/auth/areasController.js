@@ -2113,7 +2113,7 @@ class AreasController {
                 }))
             }
 
-            await Factory.helpers.recalculateAllActivitiesCost(req.body.areaId);
+            await Factory.helpers.recalculateAllActivitiesCost(req.body.areaId, req);
             return res.send(Factory.helpers.prepareResponse({
                 message: req.__('Activities costs updated.'),
                 data: {}
