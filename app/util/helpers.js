@@ -590,22 +590,33 @@ class Helpers {
     /**
      * Re calculate costs for All Activities under an area 
      */
-    async recalculateAllActivitiesCost(areaId){
+    async recalculateAllActivitiesCost(areaId, req){
+        let logMetaData = {
+            areaId: areaId,
+            userMysqlId: req.USER_MYSQL_ID,
+            ip: req.ip,
+            url: req.originalUrl,
+            method: req.method,
+            recalculateCostFunctionLog: {
+                area: {},
+                activities: {},
+            }
+        };
+
         await Factory.models.area.findOne({_id: areaId})
-        //.populate('activities')
         .then(async (area)=>{
             
-            //console.log(area); */
-            //let allActivities = area.activities;
+            console.log(area.toObject());
+            logMetaData.recalculateCostFunctionLog.area = area.toObject();
+
             let allActivities = await Factory.models.activity.find({areaId: areaId}, null, {sort: {'dateCompleted': 1}}).exec();
 
-            allActivities.sort(function(a,b){
-                // Turn your strings into dates, and then subtract them
-                // to get a value that is either negative, positive, or zero.
+            /* allActivities.sort(function(a,b){
                 return new Date(a.dateCompleted) - new Date(b.dateCompleted);
-                });
-            //area.activities.toObject();
+                }); */
+
             console.log(allActivities);
+            logMetaData.recalculateCostFunctionLog.activities = JSON.parse(JSON.stringify(allActivities));
             /* let currentNumberOfTrees = area.numberOfTrees*1; */
             /* BIG CHANGE: start with zero */
             let currentNumberOfTrees = 0;
@@ -697,10 +708,21 @@ class Helpers {
                 console.log("Updated");
             }
             //return "done";
+            Factory.logger.log({
+                level: 'info',
+                message: `Recalculate All areas costs - ${req.originalUrl} - ${req.method}`,
+                meta: logMetaData
+            });
             console.log("done")
         }, function (err){
             if(err){
                 console.error(err)
+                logMetaData.error = err
+                Factory.logger.log({
+                    level: 'error',
+                    message: `Recalculate All areas costs - ${req.originalUrl} - ${req.method}`,
+                    meta: logMetaData
+                });
                 //return "not done";
             }
         })
