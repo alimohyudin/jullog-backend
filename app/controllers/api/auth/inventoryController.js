@@ -572,6 +572,168 @@ class InventoryController {
         });
         
     }
+
+    /**
+     * Get shopping list overview with pagination
+     * @function
+     * @param {Date} [fromDate] {@link ActivitySchema}.dateCompleted
+     * @param {Date} [toDate] {@link ActivitySchema}.dateCompleted
+     * @param {String} [areaId] {@link AreaSchema}._id
+     * @param {String} [status] {@link ActivitySchema}.status
+     * @param {String} [activityType] {@link ActivitySchema}.activityType
+     * @description Expenditures = used materials for selected period
+     * @returns {PrepareResponse|InventorySchema|Pagination} Returns the Default response object.  With `data` object containing Products
+     */
+    getShoppingList(req, res){
+        req.getValidationResult().then(async(result) =>{
+            let match = {}, aggregation = [], where=[];
+            let areaName = 'All Activities';
+
+            
+                where.push({'userMysqlId' : req.USER_MYSQL_ID});
+
+                let now = new Date();
+
+                let fromDate = (req.body.fromDate)? new Date(req.body.fromDate) : new Date(now.getFullYear()+"-01-01");
+                let toDate = (req.body.toDate)? new Date(req.body.toDate) : new Date(now.getFullYear()+"-12-31");
+                console.log(toDate);
+                //toDate.setDate(toDate.getDate() + 1);
+                //console.log(toDate);
+                //toDate = toDate.add(1).day();
+                /**
+                 * where.push({'createdAt' : { $gte: fromDate, $lt: toDate}});
+                 */
+                //where.push({'dateCompleted' : { $gte: fromDate, $lt: toDate}});
+
+
+                // if(req.body.status && req.body.status != '')
+                //     where.push({'status': req.body.status});
+                let dateFilter = {};
+                if(req.body.fromDate && req.body.toDate)
+                    dateFilter = {dateCompleted: { $gte: fromDate, $lt: toDate}};
+                else if(req.body.toDate)
+                    dateFilter = {dateCompleted: { $lt: toDate}};
+                else if(req.body.fromDate)
+                    dateFilter = {dateCompleted: { $gte: fromDate}};
+
+
+                let areaIdFilter = {};
+                if(req.body.areaId)
+                    areaIdFilter = {'areaId': {$eq: req.body.areaId}};
+                else
+                    areaIdFilter = {'areaId': {$ne: null}};
+                    
+                let statusFilter = {};
+                //if(req.body.status)
+                    statusFilter = {'status': {$eq: 'Plan'}};
+
+                match = {
+                    $and: [
+                        {userMysqlId: req.USER_MYSQL_ID},
+                        statusFilter,
+                        dateFilter,
+                        areaIdFilter,
+                    ]
+                };
+
+                console.log(areaIdFilter);
+                
+            //get all user products
+            //let allProducts = await Factory.models.inventory.findOne({userMysqlId: req.USER_MYSQL_ID}).exec();
+            //get all user activities OR find activity with current product id and get its quantity
+            /* for (let i = 0; i < allProducts.length; i++) {
+                const product = allProducts[i];
+                let activities = await Factory.models.activity.find({mean: product._id, dateFilter, areaIdFilter}).exec();
+                
+            } */
+            let plannedProducts = {};
+
+            Factory.models.activity.find(match)
+            .populate({path: 'areaId', select: '_id areaName', model: Factory.models.area})
+            .populate('mean')
+            .exec(async(err, result)=>{
+                if(err){
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('Error finding activities.')
+                    }))
+                }
+
+                console.log("total activities: "+result.length);
+
+                for (let i = 0; i < result.length; i++) {
+                    const activity = result[i];
+                    if(activity.mean && activity.mean.length > 0){
+                        for (let j = 0; j < activity.mean.length; j++) {
+                            const myMean = activity.mean[j];
+                            if(myMean._id in plannedProducts){
+                                plannedProducts[myMean._id]['plannedQuantity'] += activity.meanQuantity[j];
+                            }else{
+                                let mean = {};//JSON.parse(JSON.stringify(activity.mean));
+                                mean['quantity'] = myMean.quantity;
+                                mean['plannedQuantity'] = activity.meanQuantity[j];
+                                plannedProducts[myMean._id] = mean;
+                                //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                            }
+                        }
+                    }
+                }
+
+                console.log("products");
+                console.log(plannedProducts);
+
+                let allProducts = JSON.parse(JSON.stringify(await Factory.models.inventory.find({userMysqlId: req.USER_MYSQL_ID}).exec()));
+                
+                for (let i = 0; i < allProducts.length; i++) {
+                    const product = allProducts[i];
+                    if(product._id in plannedProducts){
+                        allProducts[i]['plannedQuantity'] = plannedProducts[product._id].plannedQuantity;
+                    }else{
+                        allProducts[i]['plannedQuantity'] = 0;
+                    }
+                }
+                console.log(allProducts);
+
+                /**
+                 * pagination
+                 */
+                let count = allProducts.length;
+
+                let page = Math.abs(req.query.page);
+                let pagination = {
+                    total: count,
+                    pages: Math.ceil(count / Factory.env.PER_PAGE.PRODUCTS),
+                    per_page: Factory.env.PER_PAGE.PRODUCTS,
+                    page: isNaN(page) ? 1:page,
+                };
+                if (pagination.page <= pagination.pages) {
+                    let skip = (pagination.page-1)*Factory.env.PER_PAGE.PRODUCTS;
+                    pagination.previous = pagination.page - 1;
+                    pagination.next = pagination.page + 1;
+
+                    let paginatedResult = allProducts.splice(skip, pagination.per_page);
+
+                    console.log("my hateful pagination: ");
+                    console.log(pagination);
+
+                    return res.send(Factory.helpers.prepareResponse({
+                        message: req.__('Shopping list data.'),
+                        data: paginatedResult,
+                        pagination: pagination,
+                    }))
+                }else{
+                    console.log("my lovely page: "+pagination.page);
+                    return res.send(Factory.helpers.prepareResponse({
+                        message: req.__('Shopping list data.'),
+                        data: [],
+                        pagination: pagination,
+                    }))
+
+                }
+            })
+        });
+        
+    }
     
     /**
      * Get fertilizer with pagination

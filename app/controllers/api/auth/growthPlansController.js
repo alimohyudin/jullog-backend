@@ -414,6 +414,7 @@ class GrowthPlansController {
           let match = {};
           
           match['planId'] = req.body.planId;
+          match['activityCategory'] = {$ne: 'area'};
 
           Factory.models.activity.find(match)
           .populate('mean')
@@ -537,7 +538,8 @@ class GrowthPlansController {
             //.populate('activities')
             .then(async(area)=>{
 
-                let plan = await Factory.models.growthPlan.findOne({_id: req.body.planId}).populate('activities').exec();
+                //let plan = await Factory.models.growthPlan.findOne({_id: req.body.planId}).populate('activities').exec();
+                let planActivities = await Factory.models.activity.find({planId: req.body.planId, activityCategory: {$ne: 'area'} }).sort({dateCompleted: -1}).exec();
                 /* //console.log(plan);
 
                 //console.log(area); */
@@ -597,18 +599,18 @@ class GrowthPlansController {
                 
                 let nowDate = new Date();
 
-                for (var i = plan.activities.length - 1; i >= 0; i--) {
+                for (var i = planActivities.length - 1; i >= 0; i--) {
 
                     //IMPORTANT: change ageYear and age_month to planned_date
                     //console.log(nowDate.getFullYear());
                     //console.log(startDate.getFullYear());
-                    //console.log(plan.activities[i]['ageYear']); 
-                    if(nowDate.getFullYear() - startDate.getFullYear() <= plan.activities[i]['ageYear'])
+                    //console.log(planActivities[i]['ageYear']); 
+                    if(nowDate.getFullYear() - startDate.getFullYear() <= planActivities[i]['ageYear'])
                     {
                         //console.log("Eligible to copy: ");
 
-                        let	newDate = new Date(startDate.getFullYear()+plan.activities[i]['ageYear'], plan.activities[i]['ageMonth']-1);
-                        let newActivity = plan.activities[i].toObject();
+                        let	newDate = new Date(startDate.getFullYear()+planActivities[i]['ageYear'], planActivities[i]['ageMonth']-1);
+                        let newActivity = planActivities[i].toObject();
 
                             
                         newActivity['autoUpdate'] = true;
@@ -622,60 +624,9 @@ class GrowthPlansController {
                         ////console.log(newActivity);
                         
 
-                        //console.log(plan.activities[i].method);
-                        let percentage = plan.activities[i].percentage?plan.activities[i].percentage:100;
+                        //console.log(planActivities[i].method);
+                        let percentage = planActivities[i].percentage?planActivities[i].percentage:100;
                         //console.log(method);
-
-                        /* newActivity['meanQuantity'] =  [];
-                        newActivity['meanTotalQuantity'] = 0;
-                        newActivity['meanCost'] = 0;
-                        //calculate product quantity
-                        //calculate mean cost
-                        if(plan.activities[i].activityType == 'spraying' || plan.activities[i].activityType == 'fertilizing'){
-                            if(plan.activities[i].mean && plan.activities[i].mean.length > 0){
-                                for (let j = 0; j < plan.activities[i].mean.length; j++) {
-                                    const element = plan.activities[i].mean[j];
-                                    if(plan.activities[i].methodUnit == "ha"){
-                                        newActivity['meanQuantity'][j] = (plan.activities[i].meanDose[j]*area.areaSize*(percentage/100)).toFixed(3);
-                                    } else if(plan.activities[i].methodUnit == "pcs"){
-                                        newActivity['meanQuantity'][j] = (plan.activities[i].meanDose[j]*currentNumberOfTrees*(percentage/100)).toFixed(3);
-                                    } else {
-                                        newActivity['meanQuantity'][j] = 0;
-                                    }
-                                    newActivity['meanTotalQuantity'] += newActivity['meanQuantity'][j]*1;
-                                    newActivity['meanCost'] += newActivity['meanQuantity'][j]*plan.activities[i].meanUnitPrice[j]
-                                }
-                            }
-                        }
-                        else if(plan.activities[i].activityType == 'planting'){
-                            //type=plantning; the qty field= (10.000/(rowdistance xplantdistance)) x trackpercentage x area size
-                            if(plan.activities[i].rowDistance > 0 && plan.activities[i].plantDistance > 0)
-                                newActivity['meanTotalQuantity'] = (( (10000 / (plan.activities[i].rowDistance * plan.activities[i].plantDistance) ) * area.areaSize * (1 - plan.activities[i].trackPercentage/100))).toFixed(3);
-                            else
-                                newActivity['meanTotalQuantity'] = (currentNumberOfTrees*(percentage/100)).toFixed(3);
-                        }
-                        else {
-                            if(plan.activities[i].methodUnit == "ha")
-                                newActivity['meanTotalQuantity'] = (area.areaSize*(percentage/100)).toFixed(3);
-                            else if(plan.activities[i].methodUnit == "pcs")
-                                newActivity['meanTotalQuantity'] = (currentNumberOfTrees*(percentage/100)).toFixed(3);
-                        }
-
-                        //calculate machine cost
-                        if(plan.activities[i].methodUnit == 'ha'){
-                            //newActivity['machineCost'] = plan.activities[i].meanCost * area.areaSize * (percentage/100);
-                            newActivity['machineCost'] = (plan.activities[i].methodUnitPrice * area.areaSize*(percentage/100)).toFixed(3);
-                            if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
-                                newActivity['hoursSpent'] = area.areaSize * (percentage/100) / plan.activities[i].methodUnitsPerHour;
-                        }else if(plan.activities[i].methodUnit == 'pcs'){
-                            newActivity['machineCost'] = (plan.activities[i].methodUnitPrice * currentNumberOfTrees*(percentage/100)).toFixed(3);
-                            if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
-                                newActivity['hoursSpent'] = currentNumberOfTrees*(percentage/100) / plan.activities[i].methodUnitsPerHour;
-                        }
-                        
-                        //calculate total cost
-                        newActivity['totalCost'] = newActivity['meanCost']*1 + newActivity['machineCost']*1; */
-
 
                         console.log("New activity Copied");
 
@@ -684,12 +635,12 @@ class GrowthPlansController {
                             delete newActivity['_id'];
 
                         ////console.log(newActivity);
-                        //area.activities.push(plan.activities[i]);
+                        //area.activities.push(planActivities[i]);
                         await Factory.models.activity(newActivity)
                         .save().then(async(copiedActivity)=>{
                             console.log("saved activity")
                             /* push activity to area */
-                            await Factory.models.area.findOneAndUpdate(
+                            /* await Factory.models.area.findOneAndUpdate(
                                 { _id: req.body.areaId },
                                 { "$push": { "activities": copiedActivity._id } }
                             ).then((updatedArea)=>{
@@ -697,7 +648,7 @@ class GrowthPlansController {
                             }, function (err) {
                                 console.log(err)
                                 console.log('error pushing to area')
-                            });
+                            }); */
                         }, function(err){
                             console.log("error occured")
                             console.log(err)
@@ -752,7 +703,8 @@ class GrowthPlansController {
             .populate('activities')
             .then(async(allAreas)=>{
               
-                let plan = await Factory.models.growthPlan.findOne({_id: req.body.planId}).populate('activities').exec();
+                //let plan = await Factory.models.growthPlan.findOne({_id: req.body.planId}).populate('activities').exec();
+                let planActivities = await Factory.models.activity.find({planId: req.body.planId, activityCategory: {$ne: 'area'} }).sort({dateCompleted: -1}).exec();
 
                 for (let areaIndex = 0; areaIndex < allAreas.length; areaIndex++) 
                 {
@@ -809,19 +761,19 @@ class GrowthPlansController {
                     
                     let nowDate = new Date();
 
-                    for (var i = plan.activities.length - 1; i >= 0; i--) 
+                    for (var i = planActivities.length - 1; i >= 0; i--) 
                     {
 
                         //IMPORTANT: change ageYear and age_month to planned_date
                         //console.log(nowDate.getFullYear());
                         //console.log(startDate.getFullYear());
-                        //console.log(plan.activities[i]['ageYear']); 
-                        if(nowDate.getFullYear() - startDate.getFullYear() <= plan.activities[i]['ageYear'])
+                        //console.log(planActivities[i]['ageYear']); 
+                        if(nowDate.getFullYear() - startDate.getFullYear() <= planActivities[i]['ageYear'])
                         {
                             //console.log("Eligible to copy: ");
 
-                            let	newDate = new Date(startDate.getFullYear()+plan.activities[i]['ageYear'], plan.activities[i]['ageMonth']-1);
-                            let newActivity = plan.activities[i].toObject();
+                            let	newDate = new Date(startDate.getFullYear()+planActivities[i]['ageYear'], planActivities[i]['ageMonth']-1);
+                            let newActivity = planActivities[i].toObject();
 
                             newActivity['autoUpdate'] = true;
                             newActivity['scheduledDate'] = newDate;
@@ -833,79 +785,23 @@ class GrowthPlansController {
 
                             ////console.log(newActivity);
                             
-                            //console.log(plan.activities[i].method);
-                            let percentage = plan.activities[i].percentage?plan.activities[i].percentage:100;
-                            /* newActivity['meanQuantity'] =  [];
-                            newActivity['meanTotalQuantity'] = 0;
-                            newActivity['meanCost'] = 0;
-                            //calculate product quantity
-                            //calculate mean cost
-                            if(plan.activities[i].activityType == 'spraying' || plan.activities[i].activityType == 'fertilizing'){
-                                if(plan.activities[i].mean && plan.activities[i].mean.length > 0){
-                                    for (let j = 0; j < plan.activities[i].mean.length; j++) {
-                                        const element = plan.activities[i].mean[j];
-                                        if(plan.activities[i].methodUnit == "ha"){
-                                            newActivity['meanQuantity'][j] = (plan.activities[i].meanDose[j]*singleArea.areaSize*(percentage/100)).toFixed(3);
-                                        } else if(plan.activities[i].methodUnit == "pcs"){
-                                            newActivity['meanQuantity'][j] = (plan.activities[i].meanDose[j]*currentNumberOfTrees*(percentage/100)).toFixed(3);
-                                        } else {
-                                            newActivity['meanQuantity'][j] = 0;
-                                        }
-                                        newActivity['meanTotalQuantity'] += newActivity['meanQuantity'][j]*1;
-                                        newActivity['meanCost'] += newActivity['meanQuantity'][j]*plan.activities[i].meanUnitPrice[j]
-                                    }
-                                }
-                            }
-                            else if(plan.activities[i].activityType == 'planting'){
-                                //type=plantning; the qty field= (10.000/(rowdistance xplantdistance)) x trackpercentage x area size
-                                if(plan.activities[i].rowDistance > 0 && plan.activities[i].plantDistance > 0)
-                                        newActivity['meanTotalQuantity'] = (( (10000 / (plan.activities[i].rowDistance * plan.activities[i].plantDistance) ) * singleArea.areaSize * (1 - plan.activities[i].trackPercentage/100))).toFixed(3);
-                                    else
-                                        newActivity['meanTotalQuantity'] = (currentNumberOfTrees*(percentage/100)).toFixed(3);
-                            }
-                            else {
-                                if(plan.activities[i].methodUnit == "ha")
-                                    newActivity['meanTotalQuantity'] = (singleArea.areaSize*(percentage/100)).toFixed(3);
-                                else if(plan.activities[i].methodUnit == "pcs")
-                                    newActivity['meanTotalQuantity'] = (currentNumberOfTrees*(percentage/100)).toFixed(3);
-                            }
-                            //calculate machine cost
-                            if(plan.activities[i].methodUnit == 'ha'){
-                                //newActivity['machineCost'] = plan.activities[i].meanCost * area.areaSize * (percentage/100);
-                                newActivity['machineCost'] = (plan.activities[i].methodUnitPrice * singleArea.areaSize*(percentage/100)).toFixed(3);
-                                if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
-                                    newActivity['hoursSpent'] = singleArea.areaSize * (percentage/100) / plan.activities[i].methodUnitsPerHour;
-                            }else if(plan.activities[i].methodUnit == 'pcs'){
-                                newActivity['machineCost'] = (plan.activities[i].methodUnitPrice * currentNumberOfTrees*(percentage/100)).toFixed(3);
-                                if(plan.activities[i].methodUnitsPerHour && plan.activities[i].methodUnitsPerHour > 0)
-                                    newActivity['hoursSpent'] = currentNumberOfTrees*(percentage/100) / plan.activities[i].methodUnitsPerHour;
-                            }
-                            
-                            //calculate total cost
-                            newActivity['totalCost'] = newActivity['meanCost']*1 + newActivity['machineCost']*1; */
+                            //console.log(planActivities[i].method);
+                            let percentage = planActivities[i].percentage?planActivities[i].percentage:100;
 
                             console.log("New Copied Activity: ");
                             console.log(newActivity);
-                            // console.log('here is the machineCost: '+newActivity['machineCost']);
-                            // console.log('here is the quantity: '+newActivity['quantity']);
-                            // console.log('here is the total cost: '+newActivity['totalcost']);
-                            /*if(plan.activities[i].mean){
-                                //console.log(plan.activities[i].mean);
-                                let mean = await Factory.models.inventory.populate(plan.activities[i], {path: 'mean'});
-                                newActivity['meanCost'] = mean.uniPrice * mean.quantity;
-                            }*/
 
                             newActivity['strategyId'] = newActivity['_id'];
                             if(newActivity['_id'])
                                 delete newActivity['_id'];
 
                             ////console.log(newActivity);
-                            //area.activities.push(plan.activities[i]);
+                            //area.activities.push(planActivities[i]);
                             await Factory.models.activity(newActivity)
                             .save().then(async(copiedActivity)=>{
 
                                 /* push activity to area */
-                                await Factory.models.area.findOneAndUpdate(
+                                /* await Factory.models.area.findOneAndUpdate(
                                     { _id: singleArea._id },
                                     { "$push": { "activities": copiedActivity._id } }
                                 ).then((updatedArea)=>{
@@ -913,7 +809,7 @@ class GrowthPlansController {
                                 }, function (err) {
                                     console.log(err)
                                     console.log('error pushing to area')
-                                });
+                                }); */
                                 /* await Factory.models.area.findOne({_id: req.body.areaId})
                                 .exec(async(err, newArea)=>{
                                     newArea.activities.push(copiedActivity._id);
