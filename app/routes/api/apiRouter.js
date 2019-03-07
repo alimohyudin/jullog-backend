@@ -73,6 +73,7 @@ module.exports = (router) => {
     router.post('/auth/user/inventory/edit-product-unit-price', auth.inventoryController.editProductUnitPrice);
     router.post('/auth/user/inventory/edit-product-nutrients', auth.inventoryController.editProductNutrients);
     router.post('/auth/user/inventory/get-expenditures', auth.inventoryController.getExpenditures);
+    router.post('/auth/user/inventory/get-shopping-list', auth.inventoryController.getShoppingList);
     router.post('/auth/user/inventory/get-fertilizer-overview', auth.inventoryController.getFertilizerOverview);
     router.post('/auth/user/inventory/get-products-journal', auth.inventoryController.getProductsJournal);
 

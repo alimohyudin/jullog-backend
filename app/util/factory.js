@@ -25,6 +25,13 @@ module.exports = class Factory {
         Factory.validators = validators;
     }
 
+    set logger(logger) {
+        Factory.logger = logger;
+    }
+
+
+
+
     get env() {
         return Factory.env;
     }
@@ -47,5 +54,9 @@ module.exports = class Factory {
 
     get validators() {
         return Factory.validators;
+    }
+    
+    get logger() {
+        return Factory.logger;
     }
 }

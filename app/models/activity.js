@@ -60,6 +60,7 @@ let activitySchema = new baseModel.Schema({
 	userMysqlId: {type: Number, required: true},
 	areaId: {type: String, ref:'area'},
 	planId: {type: String, ref:'growthplan'},
+	strategyId: {type: String, ref:'activity'},
 	templateId: {type: String, ref:'activity'},
 	activityCategory: {type: String, enum: ['area', 'plan', 'template'], required: true},
 

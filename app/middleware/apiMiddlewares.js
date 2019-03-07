@@ -16,7 +16,6 @@ module.exports = {
                 }
                 else {
                     //console.log(decoded);
-                    
                     if(decoded.id !== undefined && decoded.name !== undefined && decoded.email !== undefined){
                         req.USER_MYSQL_ID = decoded.id;
                         req.USER_NAME = decoded.name;
@@ -24,6 +23,7 @@ module.exports = {
                         req.PACKAGE = decoded.package;
                         req.ALLOWED_AREAS = decoded.allowed_areas;
                         req.VAT_NUMBER = decoded.vat_number;
+                        //Factory.logger.info(req.USER_MYSQL_ID);
                         next();
                     }
                     else
@@ -63,5 +63,49 @@ module.exports = {
         else {
             return res.send(Factory.helpers.prepareResponse({message: req.__('Token not provided'), success: false}));
         }
-    }
+    },
+    logger: function(req, res, next) {
+        console.log("coming in logger")
+        var oldWrite = res.write,
+            oldEnd = res.end;
+
+        var chunks = [];
+
+        res.write = function (chunk) {
+            chunks.push(chunk);
+
+            oldWrite.apply(res, arguments);
+        };
+
+        res.end = function (chunk) {
+            if (chunk)
+            chunks.push(chunk);
+
+            var body = Buffer.concat(chunks).toString('utf8');
+            console.log(req.path, body);
+
+            oldEnd.apply(res, arguments);
+        };
+
+        next();
+    },
+    errorLoggingWinston: function(err, req, res, next) {
+        // Factory.logger.error(`${a} - ${err.message} - ${req.originalUrl} - ${req.method} - ${req.ip}`, {USER_MYSQL_ID: req.USER_MYSQL_ID});
+        Factory.logger.log({
+                level: 'error',
+                message: `${err.message} - ${req.originalUrl} - ${req.method}`,
+                meta: {
+                    userMysqlId: req.USER_MYSQL_ID,
+                    status: err.status || 500,
+                    url: req.originalUrl,
+                    method: req.method,
+                    ip: req.ip
+                }
+            });
+        // render the error page
+        res.send(Factory.helpers.prepareResponse({
+            success: false,
+            message: req.__('Something went wrong, try later'),
+        }));
+    },
 };
