@@ -1,4 +1,4 @@
-
+let Factory = require('../../util/factory')
 module.exports = (router) => {
     // require all API controllers here
     // register routes and return router
@@ -13,6 +13,42 @@ module.exports = (router) => {
 
     router.get('/recalculateAge', indexController.recalculateAge);
     router.get('/calculateTrees', indexController.calculateTrees);
+    router.get('/convertToLowerCase', function something(req,res){
+        Factory.models.activity.find({}, function(err, data){
+            if(err){
+                console.log(err)
+                return res.send(Factory.helpers.prepareResponse({
+                    success: true,
+                    message: "converted"
+                }));
+            }
+            for (let index = 0; index < data.length; index++) {
+                const element = data[index];
+                if(element.name && element.name != ''){
+                    element.name = element.name.toLowerCase();
+                }
+                if(element.contractor && element.contractor != ''){
+                    element.contractor = element.contractor.toLowerCase();
+                }
+                if(element.performedBy && element.performedBy != ''){
+                    element.performedBy = element.performedBy.toLowerCase();
+                }
+                if(!element.activityCategory){
+                    if(element.areaId){
+                        element.activityCategory = "area"
+                    }
+                    if(element.planId){
+                        element.activityCategory = "plan"
+                    }
+                }
+                element.save();
+            }
+            return res.send(Factory.helpers.prepareResponse({
+                success: true,
+                message: "converted"
+            }));
+        })
+    })
     //router.get('/test', indexController.test);
     //router.post('/create-area', indexController.createArea);
     // router.get('/delete-all-trees', indexController.deleteMysqlAreasTrees);

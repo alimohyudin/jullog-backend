@@ -700,7 +700,7 @@ class GrowthPlansController {
             }
 
             Factory.models.area.find({userMysqlId: req.USER_MYSQL_ID})
-            .populate('activities')
+            //.populate('activities')
             .then(async(allAreas)=>{
               
                 //let plan = await Factory.models.growthPlan.findOne({_id: req.body.planId}).populate('activities').exec();

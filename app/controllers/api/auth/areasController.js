@@ -2103,7 +2103,8 @@ class AreasController {
      * @returns {PrepareResponse} Returns the Default response object.
      */
     recalculateAllActivitiesCosts(req, res){
-        req.checkBody('areaId', 'areaId is required').required();
+        if(!req.body.allAreas)
+            req.checkBody('areaId', 'areaId is required').required();
 
         req.getValidationResult().then(async(result)=>{
             if(!result.isEmpty()){
@@ -2112,8 +2113,18 @@ class AreasController {
                     message: req.__(result.array()[0].msg)
                 }))
             }
-
-            await Factory.helpers.recalculateAllActivitiesCost(req.body.areaId, req);
+            if(req.body.allAreas){
+                let allAreas = await Factory.models.area.find({userMysqlId: req.USER_MYSQL_ID}).exec();
+                for (let areaIndex = 0; areaIndex < allAreas.length; areaIndex++) 
+                {
+                    let singleArea = allAreas[areaIndex];
+                    await Factory.helpers.recalculateAllActivitiesCost(singleArea._id, req);
+                }
+            }
+            else{
+                await Factory.helpers.recalculateAllActivitiesCost(req.body.areaId, req);
+            }
+            
             return res.send(Factory.helpers.prepareResponse({
                 message: req.__('Activities costs updated.'),
                 data: {}
