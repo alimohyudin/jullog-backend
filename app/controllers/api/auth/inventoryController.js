@@ -65,6 +65,8 @@ class InventoryController {
                 molybdenum:(req.body.molybdenum)? req.body.molybdenum : null,
                 zinc:(req.body.zinc)? req.body.zinc : null,
                 
+                density:(req.body.density)? req.body.density : null,
+                
                 createdAt: (req.body.createdAt) ? req.body.createdAt: new Date(),
                 updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
             }
@@ -322,6 +324,9 @@ class InventoryController {
                 product.manganese = (req.body.manganese)? req.body.manganese : null;
                 product.molybdenum = (req.body.molybdenum)? req.body.molybdenum : null;
                 product.zinc = (req.body.zinc)? req.body.zinc : null;
+                
+                product.density = (req.body.density)? req.body.density : null;
+                
                 product.save();
                 
                 return res.send(Factory.helpers.prepareResponse({
