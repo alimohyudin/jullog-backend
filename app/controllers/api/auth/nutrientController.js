@@ -4,7 +4,8 @@ class NutrientHelper{
     /**
      * Nutrients TimeSeries Graph helper
      */
-    async nutrientsTimeSeriesGraphs(match, property){
+    async nutrientsTimeSeriesGraphs(match, property, denominator = 'trees'){
+        console.error('Denominator: '+denominator)
         let outputData = [];
         let data = await Factory.models.activity.find(match, null, {sort: {'dateCompleted': 1}}).exec();
         let activityAndArea = await Factory.models.area.findOne({_id: match.areaId}).exec();
@@ -32,6 +33,7 @@ class NutrientHelper{
             if(thisActivity.mean && thisActivity.mean != ''){
                 let totalNutrientsQuantity = 0;
                 let trees = totalTrees;
+                let areaSize = 1;
                 for (let i = 0; i < thisActivity.mean.length; i++) {
                     const meanId = thisActivity.mean[i];
                     let nutrient = await Factory.models.inventory.findOne({'_id': meanId}).exec();
@@ -44,31 +46,42 @@ class NutrientHelper{
                     console.log(nutrient.nitrogen)
                     console.log(quantityNutrient)
                     console.log(totalTrees) */
-                    let density = 1, areaSize = 1;
+                    let density = 1;
 
                     if(thisActivity.meanUnit[i] == 'Ltr'){
                         //liquid
                         //density = nutrient.density
                         density = (nutrient.density) ? nutrient.density : 1;
-                        if(thisActivity.methodUnit == 'ha')
+                        /* if(thisActivity.methodUnit == 'ha'){
                             areaSize = (activityAndArea.areaSize) ? activityAndArea.areaSize*1 : 0;
-                        else 
                             trees = 1;
-                    } else {
+                        }else{
+                            areaSize = 1;
+                        } */
+                            
+                    } /* else {
                         //solid
                         //density = 1
                         density = 1;
                         areaSize = 1
-                        if(thisActivity.methodUnit == 'ha')
+                        if(thisActivity.methodUnit == 'ha'){
                             areaSize = (activityAndArea.areaSize) ? activityAndArea.areaSize*1 : 0;
-                        else 
                             trees = 1;
-                    }
+                        }else{
+                            areaSize = 1;
+                        }
+                    } */
                     totalNutrientsQuantity += (nutrientQuantity*1) * (nutrientPercentage*1) * (density*1);
                 }
-                totalNutrientsQuantity /= trees;
-                //kg to mg
-                totalNutrientsQuantity *= 1000;
+                areaSize = (activityAndArea.areaSize) ? activityAndArea.areaSize*1 : 1;
+                if(denominator == 'areaSize'){
+                    totalNutrientsQuantity /= areaSize;
+                }else{
+                    totalNutrientsQuantity /= trees;
+                    //kg to mg
+                    totalNutrientsQuantity *= 1000;
+                }
+                
                 //let quantityNutrientPerTree = totalNutrientsQuantity / totalTrees;
 
                 if(totalNutrientsQuantity >= 0){
@@ -458,6 +471,7 @@ class NutrientController {
             let match = {}, aggregation = [];
             let areaName = 'Kulturer af samme alder';//'All Users';
             let areaAge = req.body.age;
+            let denominator = req.body.denominator ? req.body.denominator : 'trees';
             
             let fromDate = (req.body.fromDate)? new Date(req.body.fromDate) : new Date("1970-01-01");
             let toDate = (req.body.toDate)? new Date(req.body.toDate) : new Date();
@@ -520,7 +534,7 @@ class NutrientController {
                         continue;
                     }
 
-                    let graphData = await (new NutrientHelper()).nutrientsTimeSeriesGraphs(thisMatch, req.body.nutrientName);
+                    let graphData = await (new NutrientHelper()).nutrientsTimeSeriesGraphs(thisMatch, req.body.nutrientName, denominator);
                     let graphResult = properties[i];
                     graphResult['graphType'] = 'timeseries';
                     graphResult['graphData'] = graphData;
