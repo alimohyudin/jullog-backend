@@ -62,6 +62,7 @@ module.exports = {
         AREAS: 50,
         PRODUCTS: 50,
         ACTIVITIES: 50,
+        NUTRIENTS: 50,
         
         ADMIN_AREAS: 50,
         ADMIN_PRODUCTS: 50,

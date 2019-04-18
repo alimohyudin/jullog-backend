@@ -59,6 +59,16 @@ class ActivityHelper {
         else if(req.body.allAreasActivities)
             where.areaId = {$ne: null}
         
+        if(req.body.freeTextName && req.body.freeTextName != '')
+            where.name = {$regex: ".*"+req.body.freeTextName+".*"}
+        
+        if(req.body.freeTextPerformedBy && req.body.freeTextPerformedBy != ''){
+            where.$or = [
+                { performedBy: {$regex: ".*"+req.body.freeTextPerformedBy+".*"} },
+                { contractor: {$regex: ".*"+req.body.freeTextPerformedBy+".*"} }
+            ]
+        }
+
         where.deletedAt = null;
 
         /**
@@ -123,7 +133,7 @@ class ActivityHelper {
     async updateFavoriteLinkedActivities(id, req){
         var activity = {
 
-            name: (req.body.name) ? req.body.name : '',
+            name: (req.body.name && req.body.name != '') ? req.body.name.toLowerCase() : '',
 
             methodUnit: (req.body.methodUnit) ? req.body.methodUnit : '',
             methodUnitPrice: (req.body.methodUnitPrice) ?  req.body.methodUnitPrice: 0,
@@ -135,8 +145,8 @@ class ActivityHelper {
             plantSize: (req.body.plantSize) ? req.body.plantSize : 0,
             plantAge: (req.body.plantAge) ? req.body.plantAge : 0,
 
-            performedBy: (req.body.performedBy) ? req.body.performedBy : '',
-            contractor: (req.body.contractor) ? req.body.contractor : '',
+            performedBy: (req.body.performedBy && req.body.performedBy != '') ? req.body.performedBy.toLowerCase() : '',
+            contractor: (req.body.contractor && req.body.performedBy != '') ? req.body.contractor.toLowerCase() : '',
             purpose: (req.body.purpose) ? req.body.purpose : '',
             reported: (req.body.reported) ? req.body.reported : '',
             notes: (req.body.notes) ? req.body.notes : '',
@@ -204,7 +214,6 @@ class ActivityController {
      * @description Creates activity type under an area
      * @returns {PrepareResponse} Returns the Default response object.
      */
-
     createActivity(req, res){
         //req.checkBody('areaId', 'areaId is required').required();
         req.checkBody('activityType', 'activityType is required').required();
@@ -226,7 +235,7 @@ class ActivityController {
                 planId: (req.body.planId) ? req.body.planId : null,
                 templateId: (req.body.templateId) ? req.body.templateId : null,
                 activityCategory: req.body.activityCategory,
-                name: (req.body.name) ? req.body.name : '',
+                name: (req.body.name && req.body.name != '') ? req.body.name.toLowerCase() : '',
 
                 methodUnit: (req.body.methodUnit) ? req.body.methodUnit : '',
                 methodUnitPrice: (req.body.methodUnitPrice) ?  req.body.methodUnitPrice: 0,
@@ -250,8 +259,8 @@ class ActivityController {
                 meanTotalQuantity: (req.body.meanTotalQuantity) ? req.body.meanTotalQuantity: 0,
                 machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
-                performedBy: (req.body.performedBy) ? req.body.performedBy : '',
-                contractor: (req.body.contractor) ? req.body.contractor : '',
+                performedBy: (req.body.performedBy && req.body.performedBy != '') ? req.body.performedBy.toLowerCase() : '',
+                contractor: (req.body.contractor && req.body.performedBy != '') ? req.body.contractor.toLowerCase() : '',
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
                 purpose: (req.body.purpose) ? req.body.purpose : '',
                 reported: (req.body.reported) ? req.body.reported : '',
@@ -353,7 +362,7 @@ class ActivityController {
 
                 //activityType: req.body.activityType,
                 //templateId: (req.body.templateId) ? req.body.templateId : null,
-                name: (req.body.name) ? req.body.name : '',
+                name: (req.body.name && req.body.name != '') ? req.body.name.toLowerCase() : '',
 
                 methodUnit: (req.body.methodUnit) ? req.body.methodUnit : '',
                 methodUnitPrice: (req.body.methodUnitPrice) ?  req.body.methodUnitPrice: 0,
@@ -375,8 +384,8 @@ class ActivityController {
                 meanTotalQuantity: (req.body.meanTotalQuantity) ? req.body.meanTotalQuantity: 0,
                 machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
-                performedBy: (req.body.performedBy) ? req.body.performedBy : '',
-                contractor: (req.body.contractor) ? req.body.contractor : '',
+                performedBy: (req.body.performedBy && req.body.performedBy != '') ? req.body.performedBy.toLowerCase() : '',
+                contractor: (req.body.contractor && req.body.performedBy != '') ? req.body.contractor.toLowerCase() : '',
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
                 purpose: (req.body.purpose) ? req.body.purpose : '',
                 reported: (req.body.reported) ? req.body.reported : '',
@@ -450,7 +459,7 @@ class ActivityController {
      */
     getActivities(req, res){
         
-        let PER_PAGE_ACTIVITIES = Factory.env.PER_PAGE.ACTIVITIES;
+        let PER_PAGE_ACTIVITIES = (req.body.printMode)?1000:Factory.env.PER_PAGE.ACTIVITIES;
 
         let where = (new ActivityHelper()).getActivitiesFilters(req);
 

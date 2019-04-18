@@ -5,7 +5,8 @@ treeNumberTimeSeries = require('./treeNumberTimeSeries'),
 activity = require('./activity'),
 inventory = require('./inventory'),
 method = require('./method'),
-growthPlan = require('./growthPlan');
+growthPlan = require('./growthPlan'),
+nutrient = require('./nutrient');
 
 module.exports = {
     area: area,
@@ -14,5 +15,6 @@ module.exports = {
     activity: activity,
     inventory: inventory,
     method: method,
-    growthPlan: growthPlan
+    growthPlan: growthPlan,
+    nutrient: nutrient,
 };

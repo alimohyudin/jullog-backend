@@ -61,6 +61,9 @@ let inventorySchema = new baseModel.Schema({
 	manganese:{type: Number},
 	molybdenum:{type: Number},
 	zinc:{type: Number},
+
+	density: {type: Number, default: 0},
+
 	createdAt: Date,
 	updatedAt: Date,
 	deletedAt: Date,

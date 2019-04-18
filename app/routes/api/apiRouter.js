@@ -1,4 +1,4 @@
-
+let Factory = require('../../util/factory')
 module.exports = (router) => {
     // require all API controllers here
     // register routes and return router
@@ -9,10 +9,47 @@ module.exports = (router) => {
         growthPlansController: new (require('./../../controllers/api/auth/growthPlansController'))(),
         inventoryController: new (require('./../../controllers/api/auth/inventoryController'))(),
         methodsController: new (require('./../../controllers/api/auth/methodsController'))(),
+        nutrientController: new (require('./../../controllers/api/auth/nutrientController'))(),
     };
 
     router.get('/recalculateAge', indexController.recalculateAge);
     router.get('/calculateTrees', indexController.calculateTrees);
+    router.get('/convertToLowerCase', function something(req,res){
+        Factory.models.activity.find({}, function(err, data){
+            if(err){
+                console.log(err)
+                return res.send(Factory.helpers.prepareResponse({
+                    success: true,
+                    message: "converted"
+                }));
+            }
+            for (let index = 0; index < data.length; index++) {
+                const element = data[index];
+                if(element.name && element.name != ''){
+                    element.name = element.name.toLowerCase();
+                }
+                if(element.contractor && element.contractor != ''){
+                    element.contractor = element.contractor.toLowerCase();
+                }
+                if(element.performedBy && element.performedBy != ''){
+                    element.performedBy = element.performedBy.toLowerCase();
+                }
+                if(!element.activityCategory){
+                    if(element.areaId){
+                        element.activityCategory = "area"
+                    }
+                    if(element.planId){
+                        element.activityCategory = "plan"
+                    }
+                }
+                element.save();
+            }
+            return res.send(Factory.helpers.prepareResponse({
+                success: true,
+                message: "converted"
+            }));
+        })
+    })
     //router.get('/test', indexController.test);
     //router.post('/create-area', indexController.createArea);
     // router.get('/delete-all-trees', indexController.deleteMysqlAreasTrees);
@@ -86,7 +123,13 @@ module.exports = (router) => {
     router.post('/auth/user/activity/delete-activity', auth.activityController.deleteActivity);
     router.post('/auth/user/activity/get-activities', auth.activityController.getActivities);
     router.post('/auth/user/activity/update-activity', auth.activityController.updateActivity);
-    
+
+    router.post('/auth/user/nutrient/create-nutrient', auth.nutrientController.createNutrient);
+    router.post('/auth/user/nutrient/get-nutrients', auth.nutrientController.getNutrients);
+    router.post('/auth/user/nutrient/update-nutrient', auth.nutrientController.editNutrient);
+    router.post('/auth/user/nutrient/delete-nutrient', auth.nutrientController.deleteNutrient);
+    router.post('/auth/user/nutrient/get-graph-data', auth.nutrientController.getGraphData);
+    router.post('/auth/user/nutrient/get-npk-graph-data', auth.nutrientController.getNPKGraphData);
     
     return router;
 };
