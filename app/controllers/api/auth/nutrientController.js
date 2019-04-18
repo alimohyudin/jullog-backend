@@ -11,13 +11,22 @@ class NutrientHelper{
         let activityAndArea = await Factory.models.area.findOne({_id: match.areaId}).exec();
         let totalTrees = 0;
         //console.log(data);
-
+        //let quarterlyData = [];
+        let quarterValue = 0;
         for (let i = 0; i < data.length; i++) {
             const thisActivity = data[i];
+            //next activity for quarter completion
+            let nextActivity = '';
+            if(i+1<data.length){
+                nextActivity = data[i+1];
+            }
+
+            let dateCompleted = new Date(thisActivity.dateCompleted);
+            
             /**
              * calculate trees
              */
-            let dateCompleted = new Date(thisActivity.dateCompleted);
+            
             let nowDate = new Date();
             if(thisActivity.dateCompleted && thisActivity.meanTotalQuantity){
                 
@@ -34,6 +43,21 @@ class NutrientHelper{
                 let totalNutrientsQuantity = 0;
                 let trees = totalTrees;
                 let areaSize = 1;
+
+                let quarterMonth = 0;
+                if(dateCompleted.getMonth() < 3)
+                    quarterMonth = 0
+                else if(dateCompleted.getMonth() < 6)
+                    quarterMonth = 3
+                else if(dateCompleted.getMonth() < 9)
+                    quarterMonth = 6
+                else if(dateCompleted.getMonth() < 12)
+                    quarterMonth = 9
+                
+                let quarterYear = dateCompleted.getFullYear();
+
+                
+
                 for (let i = 0; i < thisActivity.mean.length; i++) {
                     const meanId = thisActivity.mean[i];
                     let nutrient = await Factory.models.inventory.findOne({'_id': meanId}).exec();
@@ -83,12 +107,43 @@ class NutrientHelper{
                 }
                 
                 //let quantityNutrientPerTree = totalNutrientsQuantity / totalTrees;
-
-                if(totalNutrientsQuantity >= 0){
+                quarterValue += totalNutrientsQuantity;
+                /**
+                 * quartermonth = 0
+                 * nextmonth = 2 i.e in same quarter so we will not push value yet but sum it in same quarter
+                 * nextmonth = 3 i.e next quarter is coming up, so push the value now
+                 */
+                let pushData = false;
+                if(nextActivity == ''){
                     outputData.push([
-                        Date.UTC(dateCompleted.getFullYear(), dateCompleted.getMonth(), dateCompleted.getDate()), totalNutrientsQuantity   
+                        Date.UTC(dateCompleted.getFullYear(), quarterMonth, 1), quarterValue   
                     ]);
+                    break;
                 }
+
+                let nextActivityDateCompleted = new Date(nextActivity.dateCompleted);
+                if(quarterMonth == 0 && nextActivityDateCompleted.getMonth() > 2)
+                    pushData = true;
+                else if(quarterMonth == 3 && nextActivityDateCompleted.getMonth() > 5)
+                    pushData = true;
+                else if(quarterMonth == 6 && nextActivityDateCompleted.getMonth() > 8)
+                    pushData = true;
+
+                if(pushData && quarterYear != nextActivityDateCompleted.getFullYear()){
+                    pushData = true;
+                }
+
+                if(pushData){
+                    outputData.push([
+                        Date.UTC(dateCompleted.getFullYear(), quarterMonth, 1), quarterValue
+                    ]);
+                    quarterValue = 0;
+                }
+                /* if(totalNutrientsQuantity >= 0){
+                    outputData.push([
+                        Date.UTC(dateCompleted.getFullYear(), dateCompleted.getMonth(), 1), totalNutrientsQuantity   
+                    ]);
+                } */
             }
         }
         return outputData;
