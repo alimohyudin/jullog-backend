@@ -107,52 +107,34 @@ class AreaHelper{
     /* end */
 
 
+    
+
     /**
      * Nutrients TimeSeries Graph helper
      */
-    async nutrientsTimeSeriesGraphs(match){
+    async nutrientsTimeSeriesGraphs2(match, nutrientName){
         let outputData = [];
-        let data = await Factory.models.activity.find(match, null, {sort: {'dateCompleted': 1}}).exec();
+        //let data = await Factory.models.nutrient.find(match, null, {sort: {'usedOnDate': 1}}).exec();
+        let aggregation = [
+            { $match: match},
+            {
+                $group:{
+                    "_id":{ month: { $month: "$usedOnDate" }, day: { $dayOfMonth: "$usedOnDate" }, year: { $year: "$usedOnDate" } }, 
+                    value: {
+                        $sum: "$"+nutrientName+".value"
+                    }
+                }
+            }
+        ];
+        let data = await Factory.models.nutrient.aggregate(aggregation);
         let totalTrees = 0;
         //console.log(data);
 
         for (let i = 0; i < data.length; i++) {
-            const thisActivity = data[i];
-            /**
-             * calculate trees
-             */
-            let dateCompleted = new Date(thisActivity.dateCompleted);
-            let nowDate = new Date();
-            if(thisActivity.dateCompleted && thisActivity.quantity && dateCompleted.getTime() <= nowDate.getTime()){
-                
-                if(thisActivity.activityType == 'planting')
-                    totalTrees += thisActivity.quantity;
-                else if(thisActivity.activityType == 'harvest' || thisActivity.activityType == 'scrap')
-                    totalTrees -= thisActivity.quantity;
-            }
-
-            /**
-             * Calculation
-             */
-            if(thisActivity.mean && thisActivity.mean != ''){
-                let nutrientQuantity = thisActivity.quantity;
-                let nutrient = await Factory.models.inventory.findOne({'_id': thisActivity.mean}).exec();
-                let nutrientPercentage = nutrient.nitrogen ? nutrient.nitrogen : 0;
-
-                let quantityNutrient = nutrientQuantity * nutrientPercentage;
-                /* console.log("Details: ")
-                console.log(nutrient)
-                console.log(nutrientQuantity)
-                console.log(nutrient.nitrogen)
-                console.log(quantityNutrient)
-                console.log(totalTrees) */
-                let quantityNutrientPerTree = quantityNutrient / totalTrees;
-                if(quantityNutrientPerTree >= 0){
-                    outputData.push([
-                        Date.UTC(dateCompleted.getFullYear(), dateCompleted.getMonth(), dateCompleted.getDate()), quantityNutrientPerTree   
-                    ]);
-                }
-            }
+            const thisNutrient = data[i];
+            outputData.push([
+                Date.UTC(thisNutrient._id.year, thisNutrient._id.month, thisNutrient._id.day), thisNutrient.value
+            ]);
         }
         return outputData;
     }
@@ -1731,10 +1713,6 @@ class AreasController {
                         }
                     }else{
                         continue;
-                        /* if(req.body.otherUsers)
-                            thisMatch['userMysqlId'] = {$ne: req.USER_MYSQL_ID};
-                        else
-                            thisMatch['userMysqlId'] = {$eq: req.USER_MYSQL_ID}; */
                     }
 
                     let graphData = await (new AreaHelper()).nutrientsTimeSeriesGraphs(thisMatch);

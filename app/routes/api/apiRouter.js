@@ -9,6 +9,7 @@ module.exports = (router) => {
         growthPlansController: new (require('./../../controllers/api/auth/growthPlansController'))(),
         inventoryController: new (require('./../../controllers/api/auth/inventoryController'))(),
         methodsController: new (require('./../../controllers/api/auth/methodsController'))(),
+        nutrientController: new (require('./../../controllers/api/auth/nutrientController'))(),
     };
 
     router.get('/recalculateAge', indexController.recalculateAge);
@@ -122,7 +123,13 @@ module.exports = (router) => {
     router.post('/auth/user/activity/delete-activity', auth.activityController.deleteActivity);
     router.post('/auth/user/activity/get-activities', auth.activityController.getActivities);
     router.post('/auth/user/activity/update-activity', auth.activityController.updateActivity);
-    
+
+    router.post('/auth/user/nutrient/create-nutrient', auth.nutrientController.createNutrient);
+    router.post('/auth/user/nutrient/get-nutrients', auth.nutrientController.getNutrients);
+    router.post('/auth/user/nutrient/update-nutrient', auth.nutrientController.editNutrient);
+    router.post('/auth/user/nutrient/delete-nutrient', auth.nutrientController.deleteNutrient);
+    router.post('/auth/user/nutrient/get-graph-data', auth.nutrientController.getGraphData);
+    router.post('/auth/user/nutrient/get-npk-graph-data', auth.nutrientController.getNPKGraphData);
     
     return router;
 };
