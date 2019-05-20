@@ -3,43 +3,36 @@ Factory = require('../util/factory');
 
 module.exports = (socket, next) => {
     let token = socket.handshake.query.token;
+    console.log("coming here... in socket middleware")
     if (token) {
-        jwt.verify(token, new Buffer(Factory.env.JWT_SECRET, 'base64'), (err, decoded) => {
+        jwt.verify(token, new Buffer(Factory.env.JWT_SECRET), (err, decoded) => {
             if (err) {
                 console.log(err);
                 return next(new Error('Invalid token'));
             }
             else {
-                Factory.models.user.findOne({_id: decoded._id}, async(error, user) => {
-                    if (error) {
-                        console.log(error);
-                        return next(new Error('Something went wrong, try later'));
-                    }
-                    if (user) {
-                        socket.USER_PASSWORD = user.password;
-                        socket.USER_PRIVATE_LOCKER_PASSWORD = user.privateLockerPassword;
-                        socket.USER_FINGERPRINT = user.fingerprint;
-                        socket.USER_VERIFICATION_CODE = user.verificationCode;
-                        socket.USER_EMAIL_VERIFICATION_CODE = user.emailVerificationCode;
-                        socket.USER_FOLLOWING = user.following;
-                        socket.USER_FOLLOWERS = user.followers;
-                        socket.USER_FRIENDS = user.friends;
-                        req.USER_MATCHES = user.matches;
-                        socket.USER = await Factory.helpers.setDefaultValues(user.toObject());
-                        Factory.redisClient.sadd([`${socket.USER._id}`, socket.id], (err, reply) => {
-                            if (err) {
-                                console.log(err);
-                                next(new Error('Something went wrong, try later'));
-                            }
-                            else {
-                                next();
-                            }
-                        });
-                    }
-                    else {
-                        next(new Error('Invalid token'));
-                    }
-                });
+                if(decoded.id !== undefined && decoded.name !== undefined && decoded.email !== undefined){
+                    socket.USER = {};
+                    socket.USER.USER_MYSQL_ID = decoded.id;
+                    socket.USER.USER_NAME = decoded.name;
+                    socket.USER.USER_EMAIL = decoded.email;
+                    socket.USER.PACKAGE = decoded.package;
+                    socket.USER.ALLOWED_AREAS = decoded.allowed_areas;
+                    socket.USER.VAT_NUMBER = decoded.vat_number;
+                    Factory.redisClient.sadd([`${socket.USER.USER_MYSQL_ID}`, socket.id], (err, reply) => {
+                        if (err) {
+                            console.log(err);
+                            next(new Error('Something went wrong, try later'));
+                        }
+                        else {
+                            next();
+                        }
+                    });
+                    next();
+                }
+                else {
+                    next(new Error('Invalid token'));
+                }
             }
         });
     }

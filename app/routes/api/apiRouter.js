@@ -123,6 +123,7 @@ module.exports = (router) => {
     router.post('/auth/user/activity/delete-activity', auth.activityController.deleteActivity);
     router.post('/auth/user/activity/get-activities', auth.activityController.getActivities);
     router.post('/auth/user/activity/update-activity', auth.activityController.updateActivity);
+    router.post('/auth/user/activity/update-mean-journal-reported', auth.activityController.updateMeanJournalReportedValue);
 
     router.post('/auth/user/nutrient/create-nutrient', auth.nutrientController.createNutrient);
     router.post('/auth/user/nutrient/get-nutrients', auth.nutrientController.getNutrients);

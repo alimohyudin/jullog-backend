@@ -1224,6 +1224,7 @@ class AreasController {
                 pagination.previous = pagination.page - 1;
                 pagination.next = pagination.page + 1;
                 Factory.models.area.find(where, '_id areaName userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
+                .sort({areaName: 1})
                 .lean(true)
                 .limit(PER_PAGE_AREAS)
                 .skip(skip)
@@ -1279,6 +1280,7 @@ class AreasController {
         let where = {userMysqlId: req.USER_MYSQL_ID};
         
         Factory.models.area.find(where, '_id areaName userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
+        .sort({areaName: 1})
         .lean(true)
         .exec(async(err, areas) => {
             if (err) {
@@ -1928,7 +1930,7 @@ class AreasController {
                 if(req.body.status)
                     activity.status = req.body.status
                 if(req.body.dateCompleted)
-                    activity.dateCompleted = new Date((new Date(req.body.dateCompleted)).getTime() + (1*60*60*1000))
+                    activity.dateCompleted = new Date((new Date(req.body.dateCompleted)).getTime() + (12*60*60*1000))
                 
                 activity.save();
                 
@@ -1972,7 +1974,7 @@ class AreasController {
                 activity.status = req.body.status;
 
                 if(req.body.dateCompleted){
-                    activity.dateCompleted = new Date((new Date(req.body.dateCompleted)).getTime() + (1*60*60*1000));
+                    activity.dateCompleted = new Date((new Date(req.body.dateCompleted)).getTime() + (12*60*60*1000));
                 }
 
                 activity.save();

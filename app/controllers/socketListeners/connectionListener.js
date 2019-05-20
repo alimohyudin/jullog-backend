@@ -8,6 +8,7 @@ module.exports = class ConnectionListener {
     }
 
     connected(socket) {
+        console.log("connected socket")
         socket.emit('connected', Factory.helpers.prepareResponse({
             message: "connection successful",
             data: socket.USER
@@ -21,7 +22,7 @@ module.exports = class ConnectionListener {
     }
 
     disconnected() {
-        Factory.redisClient.srem([`${this.USER._id}`, this.id], (err, reply) => {
+        Factory.redisClient.srem([`${this.USER.USER_MYSQL_ID}`, this.id], (err, reply) => {
             if (err) {
                 console.log(err);
             }
