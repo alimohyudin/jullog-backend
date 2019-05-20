@@ -79,7 +79,7 @@ let activitySchema = new baseModel.Schema({
 	meanQuantity: [{ type: Number, default: 0}],
 	meanUnit: [{ type: String, default: 0}],
 	meanTotalQuantity: { type: Number, default: 0},
-
+	meanJournalReported: [{ type: Boolean, default: false}],
 	
 	
 	methodUnit: { type: String, default: 0},

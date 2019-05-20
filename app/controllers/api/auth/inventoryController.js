@@ -1,5 +1,33 @@
 let Factory = require('../../../util/factory');
 
+class InventoryHelper{
+    async updateActivityProductUnitPrice(productId, value){
+        /**
+         * 1- find all activities that has mean with given _id with status plan
+         * 2- find index of _id inside mean array of activity
+         * 3- update meanUnitPrice[ index ] with given value
+         */
+        
+        await Factory.models.activity.find({mean: productId, status: 'Plan'})
+        .exec(async(err, activities) => {
+            if(err){
+                return -1;
+            }
+            for (let index = 0; index < activities.length; index++) {
+                const element = activities[index];
+                let indexOfProduct = element.mean.indexOf(productId);
+                //activities[index].meanUnitPrice[indexOfProduct] = value;
+                //await activities[index].save();
+                let meanUnitPrice = activities[index].meanUnitPrice;
+                meanUnitPrice[indexOfProduct] = value;
+                console.log(element._id)
+                await Factory.models.activity.findOneAndUpdate({_id: element._id}, { $set: {meanUnitPrice: meanUnitPrice}});
+            }
+            return 1;
+        });
+      }
+}
+
 /**
  * InventoryController
  * @class
@@ -408,6 +436,8 @@ class InventoryController {
 
                 product.unitPrice = req.body.unitPrice;
                 product.save();
+
+                await (new InventoryHelper()).updateActivityProductUnitPrice(req.body.productId, req.body.unitPrice);
                 
                 return res.send(Factory.helpers.prepareResponse({
                     message: req.__("Product unitPrice changed!"),
@@ -979,8 +1009,7 @@ class InventoryController {
                   areaIdFilter = {'areaId': {$ne: null}};
                   
               let activityTypeFilter = {};
-              if(req.body.activityType)
-                  activityTypeFilter = {'activityType': {$eq: req.body.activityType}};
+                activityTypeFilter = {'activityType': {$in: ['spraying', 'fertilizing']}};
 
               match = {
                   $and: [
@@ -1007,6 +1036,7 @@ class InventoryController {
 
           Factory.models.activity.find(match)
           .populate({path: 'areaId', select: '_id areaName areaSize farmFieldId', model: Factory.models.area})
+          .populate({path: 'mean', select: '_id name registrationNumber type', model: Factory.models.inventory})
           .exec(async(err, allProducts)=>{
               if(err){
                   return res.send(Factory.helpers.prepareResponse({

@@ -27,9 +27,9 @@ require('winston-mongodb');
 mongoose.Promise = global.Promise;
 
 //mongoose.connect('mongodb://mongo/tender-app');
-//live: 
-let mongodbUrl = 'mongodb://localhost/tender-app';
-//test: let mongodbUrl = 'mongodb://127.0.0.1:27017/tender-app';
+//live: let mongodbUrl = 'mongodb://localhost/tender-app';
+//test: 
+let mongodbUrl = 'mongodb://127.0.0.1:27017/tender-app';
 
 //live: mongoose.connect(, { useNewUrlParser: true });
 mongoose.connect(mongodbUrl, { useNewUrlParser: true })
@@ -47,6 +47,7 @@ Factory.env = env;
 Factory.models = models;
 Factory.redisClient = redisClient;
 Factory.validators = validators;
+Factory.mongoose = mongoose;
 Factory.logger = winston.createLogger({
     transports: [
         new winston.transports.MongoDB({
@@ -150,11 +151,11 @@ app.use("/assets", express.static(__dirname + './../assets'));
 
 let server = http.createServer(app);
 server.listen(env.PORT);
-// Factory.socketIO = socketIO.listen(server, {
-//     transports: ['websocket', 'polling']
-// });
-// Factory.socketIO.use(socketMiddleware);
-// Factory.socketIO.on('connect', connectionListener.connected);
+Factory.socketIO = socketIO.listen(server, {
+    transports: ['websocket', 'polling']
+});
+Factory.socketIO.use(socketMiddleware);
+Factory.socketIO.on('connect', connectionListener.connected);
 console.log(`server running at: ${env.BASE_URL}`);
 
 // all authenticated routes will have /auth prefix
