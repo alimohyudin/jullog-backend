@@ -63,6 +63,7 @@ let activitySchema = new baseModel.Schema({
 	strategyId: {type: String, ref:'activity'},
 	templateId: {type: String, ref:'activity'},
 	activityCategory: {type: String, enum: ['area', 'plan', 'template'], required: true},
+	areaType: {type: String, required: true},
 
 	name: {type: String, default: ''},
 	activityType: { type: String, default: ''},

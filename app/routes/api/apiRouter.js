@@ -12,6 +12,7 @@ module.exports = (router) => {
         nutrientController: new (require('./../../controllers/api/auth/nutrientController'))(),
     };
 
+    router.get('/update302To303', indexController.update302To303);
     router.get('/recalculateAge', indexController.recalculateAge);
     router.get('/calculateTrees', indexController.calculateTrees);
     router.get('/convertToLowerCase', function something(req,res){

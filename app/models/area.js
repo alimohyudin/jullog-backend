@@ -54,7 +54,8 @@ let areaSchema = new baseModel.Schema({
     areaMysqlId: Number,
 	userMysqlId: {type: Number, required: true},
 
-    areaName: {type: String, required: true},
+	areaName: {type: String, required: true},
+	areaType: {type: String, required: true},
 	postCode: {type: String, default: ''},
 	roadAndNumber: {type: String, default: ''},
     yearOfEstablishment: {type: String, default: ''},

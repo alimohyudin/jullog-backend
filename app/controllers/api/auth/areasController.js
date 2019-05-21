@@ -193,6 +193,7 @@ class AreasController {
         }
 
         req.checkBody('areaName', 'areaName is required').required();
+        req.checkBody('areaType', 'areaType is required').required();
 
         req.getValidationResult().then(async(result) => {
             if(!result.isEmpty()){
@@ -207,6 +208,7 @@ class AreasController {
                 userMysqlId: req.USER_MYSQL_ID,
 
                 areaName: req.body.areaName,
+                areaType: req.body.areaType,
                 postCode: (req.body.postCode) ? req.body.postCode: '',
                 roadAndNumber: (req.body.roadAndNumber) ? req.body.roadAndNumber: '',
                 yearOfEstablishment: (req.body.yearOfEstablishment) ? req.body.yearOfEstablishment: '',
@@ -1223,7 +1225,7 @@ class AreasController {
                 let skip = (pagination.page-1)*PER_PAGE_AREAS;
                 pagination.previous = pagination.page - 1;
                 pagination.next = pagination.page + 1;
-                Factory.models.area.find(where, '_id areaName userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
+                Factory.models.area.find(where, '_id areaName areaType userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
                 .sort({areaName: 1})
                 .lean(true)
                 .limit(PER_PAGE_AREAS)
@@ -1279,7 +1281,7 @@ class AreasController {
     getAllAreas(req, res){
         let where = {userMysqlId: req.USER_MYSQL_ID};
         
-        Factory.models.area.find(where, '_id areaName userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
+        Factory.models.area.find(where, '_id areaName areaType userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
         .sort({areaName: 1})
         .lean(true)
         .exec(async(err, areas) => {
