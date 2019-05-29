@@ -485,7 +485,7 @@ class InventoryController {
                 if(req.body.fromDate && req.body.toDate)
                     dateFilter = {dateCompleted: { $gte: fromDate, $lt: toDate}};
                 else if(req.body.toDate)
-                    dateFilter = {dateCompleted: { $lt: toDate}};
+                    dateFilter = {dateCompleted: { $lte: toDate}};
                 else if(req.body.fromDate)
                     dateFilter = {dateCompleted: { $gte: fromDate}};
 
@@ -540,11 +540,11 @@ class InventoryController {
                         for (let j = 0; j < activity.mean.length; j++) {
                             const myMean = activity.mean[j];
                             if(myMean._id in plannedProducts){
-                                plannedProducts[myMean._id]['plannedQuantity'] += activity.meanQuantity[j];
+                                plannedProducts[myMean._id]['plannedQuantity'] += activity.meanQuantity[j]*1;
                             }else{
                                 let mean = {};//JSON.parse(JSON.stringify(activity.mean));
                                 mean['quantity'] = myMean.quantity;
-                                mean['plannedQuantity'] = activity.meanQuantity[j];
+                                mean['plannedQuantity'] = activity.meanQuantity[j]*1;
                                 plannedProducts[myMean._id] = mean;
                                 //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
                             }

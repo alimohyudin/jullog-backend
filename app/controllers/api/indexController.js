@@ -6,17 +6,18 @@ module.exports = class IndexController {
     constructor() {
     }
 
-    update302To303(){
+    update302To303(req, res){
         Factory.models.area.find({})
         .exec(async(err, areas)=>{
             if(err){
                 console.log(err);
             }
             areas.forEach((area, index, list) =>{
-                areas[index].areaType = 'christmas'
+                areas[index].activities = []
+                areas[index].areaType = 'christmasTreesAbiesNordmanniana'
                 areas[index].save();
             });
-            await Factory.models.activity.find({})
+            /* await Factory.models.activity.find({})
             .exec(async(err, activities)=>{
                 if(err){
                     console.log(err);
@@ -25,7 +26,7 @@ module.exports = class IndexController {
                     activities[index].areaType = 'christmas'
                     activities[index].save();
                 });
-            })
+            }) */
             return res.send(Factory.helpers.prepareResponse({
                 success: true,
                 message: "areas updated",
