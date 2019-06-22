@@ -253,6 +253,8 @@ class AreasController {
 
                 activities:[],
 
+                properties: (req.body.properties) ? req.body.properties : [],
+
 
 
                 createdAt: (req.body.createdAt) ? req.body.createdAt: new Date(),
@@ -295,6 +297,7 @@ class AreasController {
 
             var area = {
                 areaName: req.body.areaName,
+                areaType: req.body.areaType,
                 postCode: (req.body.postCode) ? req.body.postCode: '',
                 roadAndNumber: (req.body.roadAndNumber) ? req.body.roadAndNumber: '',
                 yearOfEstablishment: (req.body.yearOfEstablishment) ? req.body.yearOfEstablishment: '',
@@ -330,7 +333,9 @@ class AreasController {
                 windExposure: (req.body.windExposure) ? req.body.windExposure: '',
                 
                 fence: (req.body.fence) ? req.body.fence : '',
-	            notes: (req.body.notes) ? req.body.notes : '',
+                notes: (req.body.notes) ? req.body.notes : '',
+                
+                properties: (req.body.properties) ? req.body.properties : [],
 
                 //trees information; form 49
                 updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
@@ -742,8 +747,12 @@ class AreasController {
             }
 
             let updateField ={};
-            updateField[req.body.fieldName] = req.body.value;
-
+            
+            if(req.body.fieldName == 'properties')
+                updateField[req.body.fieldName] = req.body.value.split(',')
+            else
+                updateField[req.body.fieldName] = req.body.value;
+                
             console.log(updateField);
             // save
             Factory.models.area.update({_id: req.body.areaId}, updateField, async(err, updatedArea) => {

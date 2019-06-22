@@ -5,6 +5,7 @@ module.exports = (router) => {
     let indexController = new (require('./../../controllers/api/indexController'))(),
     auth = {
         activityController: new (require('./../../controllers/api/auth/activityController'))(),
+        areaPropertyController: new (require('./../../controllers/api/auth/areaPropertyController'))(),
         areasController: new (require('./../../controllers/api/auth/areasController'))(),
         growthPlansController: new (require('./../../controllers/api/auth/growthPlansController'))(),
         inventoryController: new (require('./../../controllers/api/auth/inventoryController'))(),
@@ -84,6 +85,12 @@ module.exports = (router) => {
     router.post('/auth/user/areas/update-area-activity-field', auth.areasController.updateActivityField);
     router.post('/auth/user/areas/area-costs', auth.areasController.areaAllActivitiesCosts);
     router.post('/auth/user/areas/recalculate-all-activities-costs', auth.areasController.recalculateAllActivitiesCosts);
+
+    router.post('/auth/user/area-property/create-property', auth.areaPropertyController.createProperty);
+    router.post('/auth/user/area-property/edit-property', auth.areaPropertyController.editProperty);
+    router.post('/auth/user/area-property/get-properties', auth.areaPropertyController.getProperties);
+    router.post('/auth/user/area-property/delete-property', auth.areaPropertyController.deleteProperty);
+    
     
 
     router.post('/auth/user/growth-plans/create-plan', auth.growthPlansController.createPlan);

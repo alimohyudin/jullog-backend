@@ -269,7 +269,6 @@ class ActivityController {
         //req.checkBody('areaId', 'areaId is required').required();
         req.checkBody('activityType', 'activityType is required').required();
         req.checkBody('activityCategory', req.__('activityCategory is required')).required();
-        req.checkBody('areaType', 'areaType is required').required();
 
         // if(req.body.activityType == "spraying" || req.body.activityType == "fertilizer")
         //     req.checkBody('mean', 'mean is required').required();
@@ -287,7 +286,6 @@ class ActivityController {
                 planId: (req.body.planId) ? req.body.planId : null,
                 templateId: (req.body.templateId) ? req.body.templateId : null,
                 activityCategory: req.body.activityCategory,
-                areaType: req.body.areaType,
                 
                 name: (req.body.name && req.body.name != '') ? req.body.name.toLowerCase() : '',
 

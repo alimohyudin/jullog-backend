@@ -104,9 +104,10 @@ let areaSchema = new baseModel.Schema({
 	areaImages:[{type: String, default:''}],
 	mapLink:{type: String, default: ''},
 	latitude: {type: Number, default: 0},
-  longitude: {type: Number, default: 0},
-  openlayerMapFeatures: {type: String, default: ''},
+	longitude: {type: Number, default: 0},
+	openlayerMapFeatures: {type: String, default: ''},
 	
+	properties:[{type: String, ref: 'areaProperty'}],
 
     createdAt: Date,
     updatedAt: Date,

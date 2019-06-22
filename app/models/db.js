@@ -7,6 +7,7 @@ inventory = require('./inventory'),
 method = require('./method'),
 growthPlan = require('./growthPlan'),
 nutrient = require('./nutrient');
+areaProperty = require('./areaProperty');
 
 module.exports = {
     area: area,
@@ -17,4 +18,5 @@ module.exports = {
     method: method,
     growthPlan: growthPlan,
     nutrient: nutrient,
+    areaProperty: areaProperty,
 };
