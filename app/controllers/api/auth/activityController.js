@@ -349,6 +349,7 @@ class ActivityController {
             // save
             Factory.models.activity(activity).save(async(err, newActivity) => {
                 if(err){
+                    console.log(err)
                     return res.send(Factory.helpers.prepareResponse({
                         success: false,
                         message: req.__('Something went wrong with creating activity functionality.')

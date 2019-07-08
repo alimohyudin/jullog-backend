@@ -8,6 +8,7 @@ method = require('./method'),
 growthPlan = require('./growthPlan'),
 nutrient = require('./nutrient');
 areaProperty = require('./areaProperty');
+sharing = require('./sharing');
 
 module.exports = {
     area: area,
@@ -19,4 +20,5 @@ module.exports = {
     growthPlan: growthPlan,
     nutrient: nutrient,
     areaProperty: areaProperty,
+    sharing: sharing,
 };
