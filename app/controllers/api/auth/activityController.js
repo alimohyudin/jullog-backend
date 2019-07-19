@@ -1,4 +1,6 @@
 let Factory = require('../../../util/factory');
+let BasicNotifier = require('../../socketNotifiers/basicNotifiers');
+
 
 class ActivityHelper {
     recalculateNumberOfTrees(areaId){
@@ -197,7 +199,8 @@ class ActivityHelper {
             plantAge: (req.body.plantAge) ? req.body.plantAge : 0,
 
             performedBy: (req.body.performedBy && req.body.performedBy != '') ? req.body.performedBy.toLowerCase() : '',
-            contractor: (req.body.contractor && req.body.performedBy != '') ? req.body.contractor.toLowerCase() : '',
+            contractor: (req.body.contractor && req.body.contractor != '') ? req.body.contractor.toLowerCase() : '',
+            contractors: (req.body.contractors) ? req.body.contractors : [],
             purpose: (req.body.purpose) ? req.body.purpose : '',
             reported: (req.body.reported) ? req.body.reported : '',
             notes: (req.body.notes) ? req.body.notes : '',
@@ -312,7 +315,8 @@ class ActivityController {
                 machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy && req.body.performedBy != '') ? req.body.performedBy.toLowerCase() : '',
-                contractor: (req.body.contractor && req.body.performedBy != '') ? req.body.contractor.toLowerCase() : '',
+                contractor: (req.body.contractor && req.body.contractor != '') ? req.body.contractor.toLowerCase() : '',
+                contractors: (req.body.contractors) ? req.body.contractors: [],
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
                 purpose: (req.body.purpose) ? req.body.purpose : '',
                 reported: (req.body.reported) ? req.body.reported : '',
@@ -346,6 +350,7 @@ class ActivityController {
                 activity['meanUnit'] = req.body.meanUnit;
                 activity['meanTotalQuantity'] = req.body.meanTotalQuantity;
             }
+            
             // save
             Factory.models.activity(activity).save(async(err, newActivity) => {
                 if(err){
@@ -380,6 +385,41 @@ class ActivityController {
                             console.log(err);
                         }
                     });
+                }
+
+                //send notifications
+                if(req.body.contractors){
+                    let contractors = req.body.contractors;
+                    if(!Array.isArray(contractors)){
+                        contractors = [];
+                        contractors.push(req.body.contractors);
+                    }
+                    contractors.forEach((val, index)=>{
+                        //create a notification for newly added user
+                        Factory.models.staff.findOne({_id: val}).exec((err, staff)=>{
+                            if(err){
+                                console.log(err)
+                                return;
+                            }
+                            let notification = {
+                                fromUserMysqlId: req.USER_MYSQL_ID,
+                                toUserMysqlId: staff.staffMysqlId,
+                                
+                                title: 'Work Assigned',
+                                detail: req.USER_NAME + ' requested you to work on the attached activity.',
+    
+                                featureName: 'work-assigned',
+                                featureId: newActivity._id,
+                                
+                                status: 'not-seen',
+                            }
+                            Factory.models.notification(notification).save(async(err, newNotification)=>{
+                                let basicNotifier = new BasicNotifier('newNotification', 'newNotification');
+                                basicNotifier.notifyUser(staff.staffMysqlId, newNotification);
+                            });
+                        });
+                    })
+
                 }
 
                 res.send(Factory.helpers.prepareResponse({
@@ -438,7 +478,8 @@ class ActivityController {
                 machineCost: (req.body.machineCost) ? req.body.machineCost : '',
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy && req.body.performedBy != '') ? req.body.performedBy.toLowerCase() : '',
-                contractor: (req.body.contractor && req.body.performedBy != '') ? req.body.contractor.toLowerCase() : '',
+                contractor: (req.body.contractor && req.body.contractor != '') ? req.body.contractor.toLowerCase() : '',
+                contractors: (req.body.contractors) ? req.body.contractors : [],
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
                 purpose: (req.body.purpose) ? req.body.purpose : '',
                 reported: (req.body.reported) ? req.body.reported : '',

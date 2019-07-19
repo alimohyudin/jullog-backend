@@ -1,5 +1,5 @@
 let Factory = require('../../util/factory'),
-StoriesListener = require('./storiesListener');
+NotificationListener = require('./notificationListener');
 
 module.exports = class ConnectionListener {
 
@@ -16,16 +16,21 @@ module.exports = class ConnectionListener {
 
         /* let storiesListener = new StoriesListener();
         socket.on('storiesFromFriends', storiesListener.storiesFromFriends); */
+        let notificationListener = new NotificationListener();
+        socket.on('getNotifications', notificationListener.getNotifications);
+        socket.on('updateNotificationsToSeen', notificationListener.updateNotificationsToSeen);
 
         socket.on('error', this.disconnected);
         socket.on('disconnect', this.disconnected);
     }
 
-    disconnected() {
-        Factory.redisClient.srem([`${this.USER.USER_MYSQL_ID}`, this.id], (err, reply) => {
-            if (err) {
-                console.log(err);
-            }
-        });
+    disconnected(err) {
+        console.log("disconnected")
+        console.log(err)
+        // Factory.redisClient.srem([`${this.USER.USER_MYSQL_ID}`, this.id], (err, reply) => {
+        //     if (err) {
+        //         console.log(err);
+        //     }
+        // });
     }
 }

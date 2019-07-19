@@ -11,6 +11,9 @@ module.exports = (router) => {
         inventoryController: new (require('./../../controllers/api/auth/inventoryController'))(),
         methodsController: new (require('./../../controllers/api/auth/methodsController'))(),
         nutrientController: new (require('./../../controllers/api/auth/nutrientController'))(),
+        notificationController: new (require('./../../controllers/api/auth/notificationController'))(),
+        staffController: new (require('./../../controllers/api/auth/staffController'))(),
+        sharedWorkController: new (require('./../../controllers/api/auth/sharedWorkController'))(),
     };
 
     router.get('/update302To303', indexController.update302To303);
@@ -145,6 +148,21 @@ module.exports = (router) => {
     router.post(baseRoute + 'nutrient/delete-nutrient', auth.nutrientController.deleteNutrient);
     router.post(baseRoute + 'nutrient/get-graph-data', auth.nutrientController.getGraphData);
     router.post(baseRoute + 'nutrient/get-npk-graph-data', auth.nutrientController.getNPKGraphData);
+
+    router.post(baseRoute + 'notification/get-notifications', auth.notificationController.getNotifications);
+    router.post(baseRoute + 'notification/ignore-notification', auth.notificationController.ignoreNotification);
+    
+    router.post(baseRoute + 'staff/add-user', auth.staffController.addUser);
+    router.post(baseRoute + 'staff/remove-user', auth.staffController.removeUser);
+    router.post(baseRoute + 'staff/get-staff', auth.staffController.getStaff);
+    router.post(baseRoute + 'staff/response-to-staff-request', auth.staffController.responseToStaffRequest);
+
+    router.post(baseRoute + 'shared-work/get-shared-activities', auth.sharedWorkController.getSharedActivities);
+    router.post(baseRoute + 'shared-work/get-shared-activity-data', auth.sharedWorkController.getSharedActivityData);
+    router.post(baseRoute + 'shared-work/create-task', auth.sharedWorkController.createTask);
+    router.post(baseRoute + 'shared-work/update-task', auth.sharedWorkController.updateTask);
+
+
     
     return router;
 };

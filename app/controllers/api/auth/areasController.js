@@ -645,6 +645,7 @@ class AreasController {
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy) ? req.body.performedBy : '',
                 contractor: (req.body.contractor) ? req.body.contractor : '',
+                contractors: (req.body.contractors) ? req.body.contractors : [],
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
                 purpose: (req.body.purpose) ? req.body.purpose : '',
                 reported: (req.body.reported) ? req.body.reported : '',
