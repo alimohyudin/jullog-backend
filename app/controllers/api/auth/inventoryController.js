@@ -537,16 +537,39 @@ class InventoryController {
                 for (let i = 0; i < result.length; i++) {
                     const activity = result[i];
                     if(activity.mean && activity.mean.length > 0){
-                        for (let j = 0; j < activity.mean.length; j++) {
-                            const myMean = activity.mean[j];
-                            if(myMean._id in plannedProducts){
-                                plannedProducts[myMean._id]['plannedQuantity'] += activity.meanQuantity[j]*1;
-                            }else{
-                                let mean = {};//JSON.parse(JSON.stringify(activity.mean));
-                                mean['quantity'] = myMean.quantity;
-                                mean['plannedQuantity'] = activity.meanQuantity[j]*1;
-                                plannedProducts[myMean._id] = mean;
-                                //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                        if(activity.status == 'Plan'){
+                            for (let j = 0; j < activity.mean.length; j++) {
+                                const myMean = activity.mean[j];
+                                
+                                if(myMean._id in plannedProducts){
+                                    plannedProducts[myMean._id]['plannedQuantity'] += activity.meanQuantity[j]*1;
+                                } else {
+                                    let mean = {};//JSON.parse(JSON.stringify(activity.mean));
+                                    mean['quantity'] = myMean.quantity;
+                                    mean['plannedQuantity'] = activity.meanQuantity[j]*1;
+                                    plannedProducts[myMean._id] = mean;
+                                    //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                                }
+                                
+                            }
+                        } else {
+                            let tasks = await Factory.models.task.find({activityId: activity._id}).exec();
+                            for (let k = 0; k < tasks.length; k++) {
+                                const task = tasks[k];
+                                for (let j = 0; j < activity.mean.length; j++) {
+                                    const myMean = activity.mean[j];
+                                    
+                                    if(myMean._id in plannedProducts){
+                                        plannedProducts[myMean._id]['plannedQuantity'] += task.meanQuantity[j]*1;
+                                    } else {
+                                        let mean = {};//JSON.parse(JSON.stringify(activity.mean));
+                                        mean['quantity'] = myMean.quantity;
+                                        mean['plannedQuantity'] = task.meanQuantity[j]*1;
+                                        plannedProducts[myMean._id] = mean;
+                                        //plannedProducts[activity.mean._id]['plannedQuantity'] = activity.quantity;
+                                    }
+                                    
+                                }
                             }
                         }
                     }
@@ -786,58 +809,41 @@ class InventoryController {
             let areaName = 'All Activities';
 
             
-                where.push({'userMysqlId' : req.USER_MYSQL_ID});
+            where.push({'userMysqlId' : req.USER_MYSQL_ID});
 
-                let now = new Date();
+            let now = new Date();
 
-                let fromDate = (req.body.fromDate)? new Date(req.body.fromDate) : new Date(now.getFullYear()+"-01-01");
-                let toDate = (req.body.toDate)? new Date(req.body.toDate) : new Date(now.getFullYear()+"-12-31");
-                console.log(toDate);
-                //toDate.setDate(toDate.getDate() + 1);
-                //console.log(toDate);
-                //toDate = toDate.add(1).day();
-                /**
-                 * where.push({'createdAt' : { $gte: fromDate, $lt: toDate}});
-                 */
-                //where.push({'dateCompleted' : { $gte: fromDate, $lt: toDate}});
-
-
-                // if(req.body.status && req.body.status != '')
-                //     where.push({'status': req.body.status});
-                let dateFilter = {};
-                if(req.body.fromDate && req.body.toDate)
-                    dateFilter = {dateCompleted: { $gte: fromDate, $lt: toDate}};
-                else if(req.body.toDate)
-                    dateFilter = {dateCompleted: { $lt: toDate}};
-                else if(req.body.fromDate)
-                    dateFilter = {dateCompleted: { $gte: fromDate}};
-
-
-                let areaIdFilter = {};
-                if(req.body.areaId)
-                    areaIdFilter = {'areaId': {$eq: req.body.areaId}};
-                else
-                    areaIdFilter = {'areaId': {$ne: null}};
-                    
-
-                match = {
-                    $and: [
-                        {userMysqlId: req.USER_MYSQL_ID},
-                        dateFilter,
-                        areaIdFilter,
-                    ]
-                };
-
-                console.log(match);
+            let fromDate = (req.body.fromDate)? new Date(req.body.fromDate) : new Date(now.getFullYear()+"-01-01");
+            let toDate = (req.body.toDate)? new Date(req.body.toDate) : new Date(now.getFullYear()+"-12-31");
+            console.log(toDate);
             
-            //get all areas populate
-            //let allProducts = await Factory.models.inventory.findOne({userMysqlId: req.USER_MYSQL_ID}).exec();
-            //get all user activities OR find activity with current product id and get its quantity
-            /* for (let i = 0; i < allProducts.length; i++) {
-                const product = allProducts[i];
-                let activities = await Factory.models.activity.find({mean: product._id, dateFilter, areaIdFilter}).exec();
+            
+            let dateFilter = {};
+            if(req.body.fromDate && req.body.toDate)
+                dateFilter = {dateCompleted: { $gte: fromDate, $lt: toDate}};
+            else if(req.body.toDate)
+                dateFilter = {dateCompleted: { $lt: toDate}};
+            else if(req.body.fromDate)
+                dateFilter = {dateCompleted: { $gte: fromDate}};
+
+
+            let areaIdFilter = {};
+            if(req.body.areaId)
+                areaIdFilter = {'areaId': {$eq: req.body.areaId}};
+            else
+                areaIdFilter = {'areaId': {$ne: null}};
                 
-            } */
+
+            match = {
+                $and: [
+                    {userMysqlId: req.USER_MYSQL_ID},
+                    dateFilter,
+                    areaIdFilter,
+                ]
+            };
+
+            console.log(match);
+            
             let plannedAreas = {};
 
             Factory.models.activity.find(match)
@@ -856,46 +862,58 @@ class InventoryController {
                 for (let i = 0; i < result.length; i++) {
                     const activity = result[i];
                     if(activity.areaId && activity.areaId != "" && activity.mean && activity.mean.length > 0){
-                        if(activity.areaId._id in plannedAreas){
-                            for (let j = 0; j < activity.mean.length; j++) {
-                                const myMean = activity.mean[j];
-                                if(myMean.nitrogen){
-                                    plannedAreas[activity.areaId._id]['nitrogen'] += myMean.nitrogen/100 * activity.meanQuantity[j];
+                        if(activity.status == 'Plan'){
+                            if(activity.areaId._id in plannedAreas){
+                                for (let j = 0; j < activity.mean.length; j++) {
+                                    const myMean = activity.mean[j];
+                                    if(myMean.nitrogen){
+                                        plannedAreas[activity.areaId._id]['nitrogen'] += myMean.nitrogen/100 * activity.meanQuantity[j];
+                                    }
+                                    if(myMean.phosphorus){
+                                        plannedAreas[activity.areaId._id]['phosphorus'] += myMean.phosphorus/100 * activity.meanQuantity[j];
+                                    }
                                 }
-                                if(myMean.phosphorus){
-                                    plannedAreas[activity.areaId._id]['phosphorus'] += myMean.phosphorus/100 * activity.meanQuantity[j];
+                            }else{
+                                let mean = {nitrogen: 0, phosphorus: 0};//JSON.parse(JSON.stringify(activity.mean));
+                                for (let j = 0; j < activity.mean.length; j++) {
+                                    const myMean = activity.mean[j];
+                                    if(myMean.nitrogen){
+                                        mean['nitrogen'] += myMean.nitrogen/100 * activity.meanQuantity[j];
+                                    }
+                                    if(myMean.phosphorus){
+                                        mean['phosphorus'] += myMean.phosphorus/100 * activity.meanQuantity[j];
+                                    }
+                                }
+                                plannedAreas[activity.areaId._id] = mean;
+                            }
+                        } else {
+                            let tasks = await Factory.models.task.find({activityId: activity._id}).exec();
+                            for (let k = 0; k < tasks.length; k++) {
+                                const task = tasks[k];
+                                if(activity.areaId._id in plannedAreas){
+                                    for (let j = 0; j < activity.mean.length; j++) {
+                                        const myMean = activity.mean[j];
+                                        if(myMean.nitrogen){
+                                            plannedAreas[activity.areaId._id]['nitrogen'] += myMean.nitrogen/100 * task.meanQuantity[j];
+                                        }
+                                        if(myMean.phosphorus){
+                                            plannedAreas[activity.areaId._id]['phosphorus'] += myMean.phosphorus/100 * task.meanQuantity[j];
+                                        }
+                                    }
+                                }else{
+                                    let mean = {nitrogen: 0, phosphorus: 0};//JSON.parse(JSON.stringify(activity.mean));
+                                    for (let j = 0; j < activity.mean.length; j++) {
+                                        const myMean = activity.mean[j];
+                                        if(myMean.nitrogen){
+                                            mean['nitrogen'] += myMean.nitrogen/100 * task.meanQuantity[j];
+                                        }
+                                        if(myMean.phosphorus){
+                                            mean['phosphorus'] += myMean.phosphorus/100 * task.meanQuantity[j];
+                                        }
+                                    }
+                                    plannedAreas[activity.areaId._id] = mean;
                                 }
                             }
-                            console.log("\n\nif: "+activity.areaId._id)
-                            console.log(activity.mean)
-                            console.log(activity.meanQuantity)
-                            console.log(plannedAreas[activity.areaId._id])
-                        }else{
-                            let mean = {nitrogen: 0, phosphorus: 0};//JSON.parse(JSON.stringify(activity.mean));
-                            for (let j = 0; j < activity.mean.length; j++) {
-                                const myMean = activity.mean[j];
-                                if(myMean.nitrogen){
-                                    mean['nitrogen'] += myMean.nitrogen/100 * activity.meanQuantity[j];
-                                }
-                                if(myMean.phosphorus){
-                                    mean['phosphorus'] += myMean.phosphorus/100 * activity.meanQuantity[j];
-                                }
-                            }
-                            /* if(activity.mean.nitrogen && activity.mean.quantity){
-                                mean['nitrogen'] = activity.mean.nitrogen/100 * activity.meanTotalQuantity;
-                                mean['phosphorus'] = activity.mean.phosphorus/100 * activity.meanTotalQuantity;
-                            } else {
-                                mean['nitrogen'] = 0;
-                                mean['phosphorus'] = 0;
-                            } */
-                            plannedAreas[activity.areaId._id] = mean;
-                            //plannedAreas[activity.mean._id]['plannedQuantity'] = activity.meanTotalQuantity;
-                            console.log("\n\nelse: "+activity.areaId._id)
-                            
-                            console.log("\n\nif: "+activity.areaId._id)
-                            console.log(activity.mean)
-                            console.log(activity.meanQuantity)
-                            console.log(plannedAreas[activity.areaId._id])
                         }
                     }
                 }
@@ -971,125 +989,104 @@ class InventoryController {
      */
     getProductsJournal(req, res){
       req.getValidationResult().then(async(result) =>{
-          let match = {}, aggregation = [], where=[];
-          let areaName = 'All Activities';
+            let match = {}, aggregation = [], where=[];
+            let areaName = 'All Activities';
 
           
-              where.push({'userMysqlId' : req.USER_MYSQL_ID});
+            where.push({'userMysqlId' : req.USER_MYSQL_ID});
 
-              let now = new Date();
+            let now = new Date();
 
-              let fromDate = (req.body.fromDate)? new Date(req.body.fromDate) : new Date(now.getFullYear()+"-01-01");
-              let toDate = (req.body.toDate)? new Date(req.body.toDate) : new Date(now.getFullYear()+"-12-31");
-              console.log(toDate);
-              //toDate.setDate(toDate.getDate() + 1);
-              //console.log(toDate);
-              //toDate = toDate.add(1).day();
-              /**
-               * where.push({'createdAt' : { $gte: fromDate, $lt: toDate}});
-               */
-              //where.push({'dateCompleted' : { $gte: fromDate, $lt: toDate}});
-
-
-              // if(req.body.status && req.body.status != '')
-              //     where.push({'status': req.body.status});
-              let dateFilter = {};
-              if(req.body.fromDate && req.body.toDate)
-                  dateFilter = {dateCompleted: { $gte: fromDate, $lt: toDate}};
-              else if(req.body.toDate)
-                  dateFilter = {dateCompleted: { $lt: toDate}};
-              else if(req.body.fromDate)
-                  dateFilter = {dateCompleted: { $gte: fromDate}};
+            let fromDate = (req.body.fromDate)? new Date(req.body.fromDate) : new Date(now.getFullYear()+"-01-01");
+            let toDate = (req.body.toDate)? new Date(req.body.toDate) : new Date(now.getFullYear()+"-12-31");
+            console.log(toDate);
+            //toDate.setDate(toDate.getDate() + 1);
+            //console.log(toDate);
+            //toDate = toDate.add(1).day();
+            /**
+             * where.push({'createdAt' : { $gte: fromDate, $lt: toDate}});
+             */
+            //where.push({'dateCompleted' : { $gte: fromDate, $lt: toDate}});
 
 
-              let areaIdFilter = {};
-              if(req.body.areaId)
-                  areaIdFilter = {'areaId': {$eq: req.body.areaId}};
-              else
-                  areaIdFilter = {'areaId': {$ne: null}};
-                  
-              let activityTypeFilter = {};
-                activityTypeFilter = {'activityType': {$in: ['spraying', 'fertilizing']}};
+            // if(req.body.status && req.body.status != '')
+            //     where.push({'status': req.body.status});
+            let dateFilter = {};
+            if(req.body.fromDate && req.body.toDate)
+                dateFilter = {dateCompleted: { $gte: fromDate, $lt: toDate}};
+            else if(req.body.toDate)
+                dateFilter = {dateCompleted: { $lt: toDate}};
+            else if(req.body.fromDate)
+                dateFilter = {dateCompleted: { $gte: fromDate}};
 
-              match = {
-                  $and: [
-                      {userMysqlId: req.USER_MYSQL_ID},
-                      activityTypeFilter,
-                      dateFilter,
-                      areaIdFilter,
-                      {status: 'Udført'},
-                      {'mean': {$ne: null}}
-                  ]
-              };
 
-              console.log(JSON.stringify(match));
-              
-          //get all user products
-          //let allProducts = await Factory.models.inventory.findOne({userMysqlId: req.USER_MYSQL_ID}).exec();
-          //get all user activities OR find activity with current product id and get its quantity
-          /* for (let i = 0; i < allProducts.length; i++) {
-              const product = allProducts[i];
-              let activities = await Factory.models.activity.find({mean: product._id, dateFilter, areaIdFilter}).exec();
-              
-          } */
-          let plannedProducts = {};
+            let areaIdFilter = {};
+            if(req.body.areaId)
+                areaIdFilter = {'areaId': {$eq: req.body.areaId}};
+            else
+                areaIdFilter = {'areaId': {$ne: null}};
+                
+            let activityTypeFilter = {};
+            activityTypeFilter = {'activityType': {$in: ['spraying', 'fertilizing']}};
 
-          Factory.models.activity.find(match)
-          .populate({path: 'areaId', select: '_id areaName areaSize farmFieldId', model: Factory.models.area})
-          .populate({path: 'mean', select: '_id name registrationNumber type', model: Factory.models.inventory})
-          .exec(async(err, allProducts)=>{
-              if(err){
-                  return res.send(Factory.helpers.prepareResponse({
-                      success: false,
-                      message: req.__('Error finding activities.')
-                  }))
-              }
+            match = {
+                $and: [
+                    {userMysqlId: req.USER_MYSQL_ID},
+                    activityTypeFilter,
+                    dateFilter,
+                    areaIdFilter,
+                    {
+                        status: {
+                            $in:['completed', 'accepted']
+                        }
+                    }
+                ]
+            };
 
-              console.log("total activities: "+allProducts.length);
-              return res.send(Factory.helpers.prepareResponse({
-                  message: req.__('Products journal.'),
-                  data: allProducts,
-                  user_vat_number: req.VAT_NUMBER
-              }))
-              //console.log(allProducts);
+            console.log(JSON.stringify(match));
+            
+            let plannedProducts = {};
 
-              /**
-               * pagination
-               */
-              /* let count = allProducts.length;
+            Factory.models.task.find(match)
+            .populate({path: 'areaId', select: '_id areaName areaSize farmFieldId', model: Factory.models.area})
+            .populate({path: 'activityId', model: Factory.models.activity, populate :
+                {path: 'mean', select: '_id name registrationNumber type', model: Factory.models.inventory}
+            })
+            .exec(async(err, allTasks)=>{
+                if(err){
+                    console.log(err)
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('Error finding activities.')
+                    }))
+                }
 
-              let page = Math.abs(req.query.page);
-              let pagination = {
-                  total: count,
-                  pages: Math.ceil(count / Factory.env.PER_PAGE.PRODUCTS),
-                  per_page: Factory.env.PER_PAGE.PRODUCTS,
-                  page: isNaN(page) ? 1:page,
-              };
-              if (pagination.page <= pagination.pages) {
-                  let skip = (pagination.page-1)*Factory.env.PER_PAGE.PRODUCTS;
-                  pagination.previous = pagination.page - 1;
-                  pagination.next = pagination.page + 1;
+                console.log("total activities: "+allTasks.length);
+                return res.send(Factory.helpers.prepareResponse({
+                    message: req.__('Products journal.'),
+                    data: allTasks,
+                    user_vat_number: req.VAT_NUMBER
+                }))
+            })
 
-                  let paginatedResult = allProducts.splice(skip, pagination.per_page);
+            /* Factory.models.activity.find(match)
+            .populate({path: 'areaId', select: '_id areaName areaSize farmFieldId', model: Factory.models.area})
+            .populate({path: 'mean', select: '_id name registrationNumber type', model: Factory.models.inventory})
+            .exec(async(err, allProducts)=>{
+                if(err){
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('Error finding activities.')
+                    }))
+                }
 
-                  console.log("my hateful pagination: ");
-                  console.log(pagination);
-
-                  return res.send(Factory.helpers.prepareResponse({
-                      message: req.__('Expenditures data.'),
-                      data: paginatedResult,
-                      pagination: pagination,
-                  }))
-              }else{
-                  console.log("my lovely page: "+pagination.page);
-                  return res.send(Factory.helpers.prepareResponse({
-                      message: req.__('Expenditures data.'),
-                      data: [],
-                      pagination: pagination,
-                  }))
-
-              } */
-          })
+                console.log("total activities: "+allProducts.length);
+                return res.send(Factory.helpers.prepareResponse({
+                    message: req.__('Products journal.'),
+                    data: allProducts,
+                    user_vat_number: req.VAT_NUMBER
+                }))
+            }) */
       });
       
   }

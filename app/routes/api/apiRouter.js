@@ -161,6 +161,9 @@ module.exports = (router) => {
     router.post(baseRoute + 'shared-work/get-shared-activity-data', auth.sharedWorkController.getSharedActivityData);
     router.post(baseRoute + 'shared-work/create-task', auth.sharedWorkController.createTask);
     router.post(baseRoute + 'shared-work/update-task', auth.sharedWorkController.updateTask);
+    router.post(baseRoute + 'shared-work/delete-task', auth.sharedWorkController.deleteTask);
+    router.post(baseRoute + 'shared-work/accept-reject-task', auth.sharedWorkController.acceptRejectTask);
+    router.post(baseRoute + 'shared-work/update-mean-journal-reported', auth.sharedWorkController.updateMeanJournalReportedValue);
 
 
     

@@ -405,7 +405,7 @@ class ActivityController {
                                 fromUserMysqlId: req.USER_MYSQL_ID,
                                 toUserMysqlId: staff.staffMysqlId,
                                 
-                                title: 'Work Assigned',
+                                title: 'work-assigned',
                                 detail: req.USER_NAME + ' requested you to work on the attached activity.',
     
                                 featureName: 'work-assigned',
@@ -883,12 +883,7 @@ class ActivityController {
                     activity.meanJournalReported = Array.apply(null, Array(activity.mean.length)).map(function() { return false });
                     activity.meanJournalReported[req.body.meanIndex] = (req.body.value == "true")?true:false;
                 }
-                // activity.save();
-                // res.send(Factory.helpers.prepareResponse({
-                //     message: req.__('Field Updated!'),
-                //     data: activity,
-                // }));
-                // save
+                
                 Factory.models.activity.update({_id: req.body.activityId}, activity, async(err, newActivity) => {
                     if(err){
                         return res.send(Factory.helpers.prepareResponse({

@@ -2,6 +2,7 @@ let Factory = require('../../../util/factory');
 
 class NotificationController{
     getNotifications(req, res){
+        //not coming here?
         let where = {
             toUserMysqlId: req.USER_MYSQL_ID,
             status: {
@@ -9,6 +10,7 @@ class NotificationController{
             }
         }
         Factory.models.notification.find(where)
+        .sort({createdAt: -1})
         .exec((err, notifications) =>{
             if(err){
                 console.error(err);

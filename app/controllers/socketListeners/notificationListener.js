@@ -12,6 +12,8 @@ module.exports = class NotificationListener {
             }
         }
         Factory.models.notification.find(where)
+        .sort({createdAt: -1})
+        .limit(20)
         .exec((err, notifications) =>{
             if(err){
                 console.error(err);

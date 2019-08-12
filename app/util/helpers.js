@@ -727,6 +727,38 @@ class Helpers {
             }
         })
     }
+
+
+    /**
+     * General delete api implementation
+     */
+    generalDeleteApi(req,res, tableName, idFieldName){
+        req.checkBody(idFieldName, idFieldName+' is required').required();
+        req.getValidationResult().then(async(result) =>{
+            if(!result.isEmpty()){
+                return res.send(Factory.helpers.prepareResponse({
+                    success: false,
+                    message: req.__(result.array()[0].msg)
+                }))
+            }
+
+            Factory.models[tableName].findOneAndRemove({_id: req.body[idFieldName]}, function(err, deletedNoted){
+                if (err) {
+                    //console.log(err);
+                    res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__("Something went wrong, try later"),
+                    }));
+                }
+                else {
+                    res.send(Factory.helpers.prepareResponse({
+                        message: req.__(tableName+' deleted'),
+                    }));
+                }
+            })
+
+        });
+    }
 }
 
 module.exports = Helpers

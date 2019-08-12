@@ -13,8 +13,8 @@ let notification = new baseModel.Schema({
     
     status: {type: String, enum: ['not-seen','seen', 'ignore'], default: 'not-seen'},
 
-    createdAt: Date,
-    updatedAt: Date,
+    createdAt: {type: Date, default: Date.now},
+    updatedAt: {type: Date, default: Date.now},
     deletedAt: Date,
 });
 

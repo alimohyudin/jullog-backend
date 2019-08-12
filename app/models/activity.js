@@ -58,7 +58,7 @@ let baseModel = require('./baseModel');
 let activitySchema = new baseModel.Schema({
 
 	userMysqlId: {type: Number, required: true},
-	areaId: {type: String, ref:'area'},
+	areaId: {type: String, ref:'Area'},
 	planId: {type: String, ref:'growthplan'},
 	strategyId: {type: String, ref:'activity'},
 	templateId: {type: String, ref:'activity'},
@@ -121,8 +121,8 @@ let activitySchema = new baseModel.Schema({
 	
 	autoUpdate: {type: Boolean, default:true},
 
-    createdAt: Date,
-    updatedAt: Date,
+    createdAt: {type: Date, default: Date.now},
+    updatedAt: {type: Date, default: Date.now},
     deletedAt: Date,
 });
 

@@ -10,8 +10,8 @@ let staff = new baseModel.Schema({
 
     request: {type: String, enum: ['request-sent','accepted', 'rejected', 'blocked'], default: 'request-sent'},
 
-    createdAt: Date,
-    updatedAt: Date,
+    createdAt: {type: Date, default: Date.now},
+    updatedAt: {type: Date, default: Date.now},
     deletedAt: Date,
 });
 
