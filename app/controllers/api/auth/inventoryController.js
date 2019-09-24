@@ -1029,9 +1029,25 @@ class InventoryController {
             let activityTypeFilter = {};
             activityTypeFilter = {'activityType': {$in: ['spraying', 'fertilizing']}};
 
+            
+            let areas = await Factory.models.area.distinct('_id', {userMysqlId: req.USER_MYSQL_ID}).exec();
+            
+
             match = {
                 $and: [
-                    {userMysqlId: req.USER_MYSQL_ID},
+                    // {},
+                    {
+                        $or: [
+                            {
+                                areaId: {
+                                    $in: areas
+                                }
+                            }, 
+                            {
+                                userMysqlId: req.USER_MYSQL_ID
+                            }
+                        ]
+                    },
                     activityTypeFilter,
                     dateFilter,
                     areaIdFilter,
@@ -1043,7 +1059,11 @@ class InventoryController {
                 ]
             };
 
+
             console.log(JSON.stringify(match));
+
+            
+            //console.log(areas);
             
             let plannedProducts = {};
 

@@ -14,6 +14,7 @@ module.exports = (router) => {
         notificationController: new (require('./../../controllers/api/auth/notificationController'))(),
         staffController: new (require('./../../controllers/api/auth/staffController'))(),
         sharedWorkController: new (require('./../../controllers/api/auth/sharedWorkController'))(),
+        financeController: new (require('./../../controllers/api/auth/financeController'))(),
     };
 
     router.get('/update302To303', indexController.update302To303);
@@ -165,7 +166,8 @@ module.exports = (router) => {
     router.post(baseRoute + 'shared-work/accept-reject-task', auth.sharedWorkController.acceptRejectTask);
     router.post(baseRoute + 'shared-work/update-mean-journal-reported', auth.sharedWorkController.updateMeanJournalReportedValue);
 
-
+    router.post(baseRoute + 'finance/finance-a', auth.financeController.getFinanceA);
+    router.post(baseRoute + 'finance/finance-b', auth.financeController.getFinanceB);
     
     return router;
 };

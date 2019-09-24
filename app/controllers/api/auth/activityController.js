@@ -60,6 +60,11 @@ class ActivityHelper {
             where.areaId = req.body.areaId
         else if(req.body.allAreasActivities)
             where.areaId = {$ne: null}
+
+        if(req.body.contractor)
+            where.contractors = {$in: [req.body.contractor]};
+
+
         
         if(req.body.freeTextName && req.body.freeTextName != '')
             where.name = {$regex: ".*"+req.body.freeTextName+".*"}

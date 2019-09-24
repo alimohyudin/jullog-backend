@@ -88,11 +88,17 @@ let activitySchema = new baseModel.Schema({
 
 	meanCost: { type: Number, default: 0},
 	machineCost: { type: Number, default: 0},
-	totalCost: { type: Number, default: 0},
+	totalCost: { type: Number, default: 0}, //planned
+	hoursSpent: {type: Number, default: 0}, //planned
+	actualTotalCost: { type: Number, default: 0}, //actual
+	actualHoursSpent: {type: Number, default: 0}, //actual
+
+
+
 	performedBy: { type: String, default: ''},
 	contractor: { type: String, default: ''},
 	contractors: [{ type: String, ref: 'Staff'}],
-	hoursSpent: {type: Number, default: 0},
+	
 	purpose: { type: String, default: ''},
 	reported: { type: String, default: ''},
 	notes: { type: String, default: ''},

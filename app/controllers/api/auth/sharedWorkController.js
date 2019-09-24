@@ -1,6 +1,46 @@
 let Factory = require('../../../util/factory');
 let BasicNotifier = require('../../socketNotifiers/basicNotifiers');
 
+class SharedWorkHelper{
+    async updateActivityActualValues(task){
+        if(task.activityId){
+            let activity = await Factory.models.activity.findOne({_id: task.activityId}).exec();
+            if(task.meanQuantity && task.meanQuantity != []){
+                //have means
+                let actualTotalCost = 0;
+                for (let index = 0; index < activity.mean.length; index++) {
+                    //const mean = activity.mean[index];
+                    /**
+                     * TODO: what if the mean is coming from staff and not from owner?
+                     */
+                    actualTotalCost += activity.meanUnitPrice[index] * task.meanQuantity[index];
+                }
+                
+                let prevActualTotalCost = 0;
+                if(activity.actualTotalCost && activity.actualTotalCost > 0)
+                    prevActualTotalCost = activity.actualTotalCost;
+                activity.actualTotalCost = prevActualTotalCost + actualTotalCost;
+                
+            } else if(task.otherQuantity && task.salePricePerUnit){
+                let actualTotalCost = task.otherQuantity * task.salePricePerUnit;
+                let actualHoursSpent = task.hoursSpent;
+
+                let prevActualTotalCost = 0;
+                if(activity.actualTotalCost && activity.actualTotalCost > 0)
+                    prevActualTotalCost = activity.actualTotalCost;
+                activity.actualTotalCost = prevActualTotalCost + actualTotalCost;
+            }
+            
+            if(task.hoursSpent){
+                let prevActualHoursSpent = 0;
+                if(activity.actualHoursSpent && activity.actualHoursSpent > 0)
+                    prevActualHoursSpent = activity.actualHoursSpent;
+                activity.actualHoursSpent = prevActualHoursSpent + task.hoursSpent;
+            }
+            activity.save();
+        }
+    }
+}
 
 class SharedWorkController{
     async getSharedActivities(req, res){
@@ -31,6 +71,7 @@ class SharedWorkController{
         }
         Factory.models.activity.find(where)
         .populate('areaId')
+        .populate('contractors')
         .exec((err, activities) =>{
             if(err){
                 console.error(err);
@@ -77,8 +118,8 @@ class SharedWorkController{
                 let tasksWhere = {
                     activityId: req.body.activityId
                 };
-                if(activity.userMysqlId != req.USER_MYSQL_ID)
-                    tasksWhere.userMysqlId = req.USER_MYSQL_ID;
+                //if(activity.userMysqlId != req.USER_MYSQL_ID)
+                //    tasksWhere.userMysqlId = req.USER_MYSQL_ID;
                 
 
                 activityData.taskData = await Factory.models.task.find(tasksWhere).exec();
@@ -129,6 +170,7 @@ class SharedWorkController{
 
                 meanQuantity: (req.body.meanQuantity) ? req.body.meanQuantity : [],
                 otherQuantity: (req.body.otherQuantity) ? req.body.otherQuantity : 0,
+                salePricePerUnit: (req.body.salePricePerUnit) ? req.body.salePricePerUnit : 0,
 
                 meanMapping: (req.body.meanMapping) ? req.body.meanMapping : [],
                 deductQuantityFrom: (req.body.deductQuantityFrom) ? req.body.deductQuantityFrom : 'no-deduct',
@@ -137,6 +179,7 @@ class SharedWorkController{
                 notes: (req.body.notes) ? req.body.notes : '',
                 status: (req.body.status) ? req.body.status : '',
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
+                hourlyRate: (req.body.hourlyRate) ? req.body.hourlyRate : 0,
                 
                 weatherCondition: (req.body.weatherCondition) ? req.body.weatherCondition : '',
                 wind: (req.body.wind) ? req.body.wind : '',
@@ -168,7 +211,7 @@ class SharedWorkController{
                                 toUserMysqlId: activity.userMysqlId,
                                 
                                 title: 'task-in-progress',
-                                detail: 'Some work is in-progress by a staff member.',
+                                detail: activity.name+' is in-progress by a staff member.',
         
                                 featureName: 'task-in-progress',
                                 featureId: req.body.activityId,
@@ -177,7 +220,7 @@ class SharedWorkController{
                             }
                             if(newTask.status == 'completed'){
                                 notification.title = 'task-completed';
-                                notification.detail = 'Some work is completed by a staff member.';
+                                notification.detail = activity.name+' udført af '+req.USER_NAME;
                                 notification.featureName = 'task-completed';
                             }
 
@@ -217,6 +260,7 @@ class SharedWorkController{
                             }
                         })
                     }
+                    (new SharedWorkHelper()).updateActivityActualValues(newTask);
                 }
 
                 return res.send(Factory.helpers.prepareResponse({
@@ -242,10 +286,12 @@ class SharedWorkController{
             let task = {
                 meanQuantity: (req.body.meanQuantity) ? req.body.meanQuantity : [],
                 otherQuantity: (req.body.otherQuantity) ? req.body.otherQuantity : 0,
+                salePricePerUnit: (req.body.salePricePerUnit) ? req.body.salePricePerUnit : 0,
                 dateCompleted: (req.body.dateCompleted) ? new Date((new Date(req.body.dateCompleted)).getTime() + (12*60*60*1000)) : '',
                 notes: (req.body.notes) ? req.body.notes : '',
                 status: (req.body.status) ? req.body.status : '',
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
+                hourlyRate: (req.body.hourlyRate) ? req.body.hourlyRate : 0,
 
                 deductQuantityFrom: (req.body.deductQuantityFrom) ? req.body.deductQuantityFrom : 'no-deduct',
                 
@@ -338,7 +384,7 @@ class SharedWorkController{
                     toUserMysqlId: newTask.userMysqlId,
                     
                     title: 'task-rejected',
-                    detail: 'Owner rejected the task! Please review it.',
+                    detail: req.USER_NAME+' afviste arbejde. Kontroller venligst.',
 
                     featureName: 'task-rejected',
                     featureId: newTask.activityId,
@@ -348,7 +394,7 @@ class SharedWorkController{
 
                 if(req.body.type == 'accepted'){
                     notification.title = 'task-accepted';
-                    notification.detail = 'Owner accepted the task!';
+                    notification.detail = 'Ejer accepterede arbejdet';
                     notification.featureName= 'task-accepted';
 
                     /**
@@ -387,6 +433,8 @@ class SharedWorkController{
                             }
                         })
                     }
+
+                    (new SharedWorkHelper()).updateActivityActualValues(newTask);
                 }
                 Factory.models.notification(notification).save(async(err, newNotification)=>{
                     if(err)

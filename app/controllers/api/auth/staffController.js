@@ -51,7 +51,7 @@ class StaffController {
                         fromUserMysqlId: staff.userMysqlId,
                         toUserMysqlId: staff.staffMysqlId,
                         
-                        title: 'Staff Request',
+                        title: 'staff-request',
                         detail: staff.ownerName + ' requested you to become his/her staff member.',
 
                         featureName: 'staff-request',
@@ -159,8 +159,8 @@ class StaffController {
                     fromUserMysqlId: req.USER_MYSQL_ID,
                     toUserMysqlId: notification.fromUserMysqlId,
                     
-                    title: 'Staff Request accepted',
-                    detail: req.USER_NAME + ' accepted your request to become your staff member.',
+                    title: 'staff-request-accepted',
+                    detail: req.USER_NAME + ' accepterede din anmodning om adgang til tildelt arbejde.',
 
                     featureName: 'staff-request-response',
                     featureId: notification.featureId,

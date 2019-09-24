@@ -7,7 +7,7 @@ class NutrientHelper{
     async nutrientsTimeSeriesGraphs(match, property, denominator = 'trees'){
         //console.error('Denominator: '+denominator)
         let outputData = [];
-        let data = await Factory.models.activity.find(match, null, {sort: {'dateCompleted': 1}}).exec();
+        let data = await Factory.models.activity.find({areaId: match.areaId}, null, {sort: {'dateCompleted': 1}}).exec();
         let activityAndArea = await Factory.models.area.findOne({_id: match.areaId}).exec();
         let totalTrees = 0;
         //console.log(data);
