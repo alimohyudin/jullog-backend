@@ -6,6 +6,35 @@ module.exports = class IndexController {
     constructor() {
     }
 
+    update302To303(req, res){
+        Factory.models.area.find({})
+        .exec(async(err, areas)=>{
+            if(err){
+                console.log(err);
+            }
+            areas.forEach((area, index, list) =>{
+                areas[index].activities = []
+                areas[index].areaType = 'christmasTreesAbiesNordmanniana'
+                areas[index].save();
+            });
+            /* await Factory.models.activity.find({})
+            .exec(async(err, activities)=>{
+                if(err){
+                    console.log(err);
+                }
+                activities.forEach((activity, index, list) =>{
+                    activities[index].areaType = 'christmas'
+                    activities[index].save();
+                });
+            }) */
+            return res.send(Factory.helpers.prepareResponse({
+                success: true,
+                message: "areas updated",
+            }));
+        })
+
+    }
+
     /* FOR: calculate current tree numbers from activities */
     calculateTrees(req, res){
         Factory.helpers.calculateAllCurrentTreeNumbers();

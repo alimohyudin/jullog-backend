@@ -133,6 +133,7 @@ class GrowthPlansController {
                     totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                     performedBy: (req.body.performedBy) ? req.body.performedBy : '',
                     contractor: (req.body.contractor) ? req.body.contractor : '',
+                    contractors: (req.body.contractors) ? req.body.contractors : [],
                     hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
                     purpose: (req.body.purpose) ? req.body.purpose : '',
                     reported: (req.body.reported) ? req.body.reported : '',
@@ -233,6 +234,7 @@ class GrowthPlansController {
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy) ? req.body.performedBy : '',
                 contractor: (req.body.contractor) ? req.body.contractor : '',
+                contractors: (req.body.contractors) ? req.body.contractors : [],
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
                 purpose: (req.body.purpose) ? req.body.purpose : '',
                 reported: (req.body.reported) ? req.body.reported : '',
@@ -547,12 +549,13 @@ class GrowthPlansController {
                 //area.activities.toObject();
                 //console.log(allActivities);
                 console.log("Area Activities...")
+                console.log(req.body.keepOldActivities)
                 let currentNumberOfTrees = 0;
                 for (var i = 0; i < allActivities.length; i++) {
                     console.log("id: "+allActivities[i]._id)
                     console.log(allActivities[i].status);
 
-                    if(allActivities[i].strategyId && (allActivities[i].status == "Plan" || allActivities[i].status == "Plannd"))
+                    if(req.body.keepOldActivities == "false" && allActivities[i].strategyId && (allActivities[i].status == "Plan" || allActivities[i].status == "Plannd"))
                     {
                         await Factory.models.activity.findOneAndRemove({_id: allActivities[i]._id}).then((result, err) => {
                             if(err){
@@ -721,7 +724,7 @@ class GrowthPlansController {
                     for (var i = 0; i < allActivities.length; i++) {
                         console.log(allActivities[i].status);
 
-                        if(allActivities[i].strategyId && (allActivities[i].status == "Plan" || allActivities[i].status == "Plannd"))
+                        if(req.body.keepOldActivities == "false" && allActivities[i].strategyId && (allActivities[i].status == "Plan" || allActivities[i].status == "Plannd"))
                         {
                             console.log("DELETING");
                             await Factory.models.activity.findOneAndRemove({_id: allActivities[i]._id}).exec();
@@ -848,6 +851,7 @@ class GrowthPlansController {
      * @param {String} areaId {@link AreaSchema}._id
      * @description It uses {@link InventorySchema} and {@link ActivitySchema} to calculate quantity and cost
      * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
+     * @deprecated
      */
     copySinglePlanActivity(req, res){
         req.checkBody('activityId', 'activityId is required').required();
@@ -1121,6 +1125,338 @@ class GrowthPlansController {
 
       });
     }
+    /**
+     * Copy single planned activity to an other plan
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @param {String} activityId {@link ActivitySchema}._id
+     * @description It populates {@link InventorySchema} and {@link MethodSchema}
+     * @returns {PrepareResponse|ActivitySchema} Returns the Default response object.
+     */
+    copyPlanToPlan(req, res){
+        req.checkBody('planId', 'planId is required').required();
+        req.checkBody('copyToPlanId', 'copyToPlanId is required').required();
+  
+        console.log("COPYING Plan To Plan:");
+  
+        req.getValidationResult().then(async(result)=>{
+          if(!result.isEmpty()){
+              return res.send(Factory.helpers.prepareResponse({
+                  success: false,
+                  message: req.__(result.array()[0].msg)
+              }))
+          }
+  
+          let allActivities = await Factory.models.activity.find({planId: req.body.planId}).exec();
+
+          for (let i = 0; i < allActivities.length; i++) {
+                const activity = allActivities[i];
+                let newActivity = activity.toObject();
+                //console.log(newActivity);
+
+                if(newActivity['_id'])
+                    delete newActivity['_id'];
+                console.log(newActivity);
+
+                newActivity['planId'] = req.body.copyToPlanId;
+
+                await Factory.models.activity(newActivity)
+                .save();
+          }
+            return res.send(Factory.helpers.prepareResponse({
+                message: req.__('Plan copied'),
+                data: result
+            }));
+        });
+      }
+
+    /**
+     * share plan via id
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @description something
+     * @returns
+     */
+    sharePlan(req, res){
+        req.checkBody('planId', 'planId is required').required();
+        req.getValidationResult().then(async (result) => {
+            if(!result.isEmpty()){
+                return res.send(Factory.helpers.prepareResponse({
+                    success: false,
+                    message: req.__(result.array()[0].msg)
+                }))
+            }
+            let sharing = {
+                userMysqlId: req.USER_MYSQL_ID,
+                sharedFeature: 'plan',
+                sharedFeatureId: req.body.planId,
+                createdAt: (req.body.createdAt) ? req.body.createdAt: new Date(),
+                updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
+            }
+            let isAlreadyExists = await Factory.models.sharing.find({userMysqlId: req.USER_MYSQL_ID, sharedFeatureId: req.body.planId}).exec();
+
+            console.log("something")
+            console.log(isAlreadyExists)
+            if(isAlreadyExists.length <= 0){
+                Factory.models.sharing(sharing)
+                .save(async(err, shared) => {
+                    if(err){
+                        console.log(err)
+                        return res.send(Factory.helpers.prepareResponse({
+                            success: false,
+                            message: req.__('problem sharing plan.')
+                        }))
+                    }
+
+                    return res.send(Factory.helpers.prepareResponse({
+                        message: "plan shared successfully.",
+                        data: shared
+                    }))
+                })
+            } else {
+                return res.send(Factory.helpers.prepareResponse({
+                    message: "plan shared successfully.",
+                    data: isAlreadyExists[0]
+                }))
+            }
+        })
+    }
+
+    /**
+     * view import plan via id
+     * @function
+     * @param {String} planId {@link GrowthPlanSchema}._id
+     * @description something
+     * @returns
+     */
+    viewSharedPlan(req, res){
+        req.checkBody('sharedId', 'sharedId is required').required();
+        req.getValidationResult().then(async (result) => {
+            console.log('coming here')
+            if(!result.isEmpty()){
+                console.log(result)
+                return res.send(Factory.helpers.prepareResponse({
+                    success: false,
+                    message: req.__(result.array()[0].msg)
+                }))
+            }
+            console.log('coming here too')
+            Factory.models.sharing.findOne({_id: req.body.sharedId.toLowerCase()})
+            .exec(async(err, sharing) => {
+                if(err){
+                    console.log(err)
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('error retrieving plans')
+                    }))
+                }
+                console.log(sharing)
+                if(sharing.sharedFeature == 'plan' && sharing.sharedFeatureId != '') {
+                    Factory.models.growthPlan.findOne({_id: sharing.sharedFeatureId})
+                    .exec(async (err, plan) => {
+                        if(err){
+                            console.log(err)
+                            return res.send(Factory.helpers.prepareResponse({
+                                success: false,
+                                message: req.__('error retrieving plans')
+                            }))
+                        }
+
+                        let match = {};
+          
+                        match['planId'] = plan._id.toString();
+                        match['activityCategory'] = {$ne: 'area'};
+
+                        let aggregation = [
+                            {
+                                $match: match
+                            },
+                            {
+                                $project: {
+                                    "mean": 1
+                                }
+                            },
+                            {
+                                $unwind: {
+                                    path: "$mean"
+                                }
+                            },
+                            {
+                                $group: {
+                                    _id: "$mean",
+                                    count: {
+                                        $sum : 1
+                                    }
+                                }
+                            }
+                        ]
+                        Factory.models.activity.aggregate(aggregation).exec(function(err, distinctMeans){
+                            console.log(err)
+                            console.log(distinctMeans)
+                            
+                            if (err) {
+                                console.error(err);
+                                return res.send(Factory.helpers.prepareResponse({
+                                    success: false,
+                                    message: req.__("Something went wrong, try later"),
+                                }));
+                            }
+                            Factory.models.inventory.populate(distinctMeans, {path: "_id"}, async (result) => {
+                                console.log(result)
+                                let totalActivitiesToImport = await Factory.models.activity.count(match).exec();
+                                return res.send(Factory.helpers.prepareResponse({
+                                    success: true,
+                                    message: req.__("Distinct means found"),
+                                    data: distinctMeans,
+                                    extras: {
+                                        "totalActivitiesToImport": totalActivitiesToImport
+                                    }
+                                }));
+                            })
+                            
+                        });
+                    })
+                }
+                else {
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('error retrieving plans')
+                    }))
+                }
+            })
+        })
+    }
+    /**
+     * @todo what if user deletes the mean from his inventory and later other user imports the mean
+     * @param {*} req 
+     * @param {*} res 
+     */
+    importSharedPlan(req, res){
+        req.checkBody('sharedId', 'sharedId is required').required();
+        req.getValidationResult().then(async (result) => {
+            if(!result.isEmpty()){
+                return res.send(Factory.helpers.prepareResponse({
+                    success: false,
+                    message: req.__(result.array()[0].msg)
+                }))
+            }
+            Factory.models.sharing.findOne({_id: req.body.sharedId.toLowerCase()})
+            .exec(async(err, sharing) => {
+                if(err){
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('error retrieving plans')
+                    }))
+                }
+
+                if(sharing.sharedFeature == 'plan' && sharing.sharedFeatureId != '') {
+                    Factory.models.growthPlan.findOne({_id: sharing.sharedFeatureId})
+                    .exec(async (err, plan) => {
+                        if(err){
+                            return res.send(Factory.helpers.prepareResponse({
+                                success: false,
+                                message: req.__('error retrieving plans')
+                            }))
+                        }
+
+                        //create plan (later: and on error delete plan.)
+                        let newPlan = {
+                            userMysqlId: req.USER_MYSQL_ID,
+                            name: plan.name,
+                            
+                            createdAt: new Date(),
+                            updatedAt: new Date(),
+                        };
+                        newPlan._id = new Factory.mongoose.Types.ObjectId();
+                        await Factory.models.growthPlan(newPlan).save();
+
+                        let match = {};
+          
+                        match['planId'] = plan._id;
+                        match['activityCategory'] = {$ne: 'area'};
+
+                        
+                        Factory.models.activity.find(match).exec(async (err, activities)=>{
+                            console.log(err)
+                            console.log(activities)
+                            if (err) {
+                                console.error(err);
+                                return res.send(Factory.helpers.prepareResponse({
+                                    success: false,
+                                    message: req.__("Something went wrong, try later"),
+                                }));
+                            }
+                            
+                            let alreadyCreatedMeans = [];
+
+                            for (let i = 0; i < activities.length; i++) {
+                                let curActivity = activities[i].toObject();
+                                //check if activities contain means
+                                    //create/import mean based on user choice
+                                    //update curActivity for new means
+                                //update _id to new ObjectId
+                                //update userMysqlId
+                                //update planId = newPlan._id
+                                //update templateId = ''
+                                //create activity using curActivity
+                                for (let j = 0; j < curActivity.mean.length; j++) {
+                                    const curMean = curActivity.mean[j];
+                                    let alreadyCreatedMean = alreadyCreatedMeans.find(o => o.oldId == curMean);
+                                    if(alreadyCreatedMean){
+                                        curActivity.mean[j] = alreadyCreatedMean._id;
+                                    } else if(req.body[curMean].includes("import_")){
+                                        let copyMean = (await Factory.models.inventory.findOne({_id: curMean}).exec()).toObject();
+                                        copyMean._id = new Factory.mongoose.Types.ObjectId();
+                                        copyMean.userMysqlId = req.USER_MYSQL_ID;
+                                        copyMean.unitPrice = 1;
+                                        copyMean.quantity = 1;
+                                        await Factory.models.inventory(copyMean).save();
+                                        curActivity.mean[j] = copyMean._id;
+                                        
+                                        copyMean.oldId = curMean;
+                                        alreadyCreatedMeans.push(copyMean);
+                                    } else if(req.body[curMean]){
+                                        curActivity.mean[j] = req.body[curMean];
+                                    } else {
+                                        //copy anyway
+                                        let copyMean = (await Factory.models.inventory.findOne({_id: curMean}).exec()).toObject();
+                                        copyMean._id = new Factory.mongoose.Types.ObjectId();
+                                        copyMean.userMysqlId = req.USER_MYSQL_ID;
+                                        copyMean.unitPrice = 1;
+                                        copyMean.quantity = 1;
+                                        await Factory.models.inventory(copyMean).save();
+                                        curActivity.mean[j] = copyMean._id;
+                                        
+                                        copyMean.oldId = curMean;
+                                        alreadyCreatedMeans.push(copyMean);
+                                    }
+                                }
+                                curActivity._id = new Factory.mongoose.Types.ObjectId();
+                                curActivity.userMysqlId = req.USER_MYSQL_ID;
+                                curActivity.planId = newPlan._id;
+                                curActivity.templateId = '';
+                                curActivity.updatedAt = new Date();
+                                curActivity.createdAt = new Date();
+                                await Factory.models.activity(curActivity).save();
+                            }
+                            return res.send(Factory.helpers.prepareResponse({
+                                success: true,
+                                message: req.__("Growth plan imported"),
+                                data: newPlan
+                            }));
+                        });
+                    })
+                }
+                else {
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('error retrieving plans')
+                    }))
+                }
+            })
+        })
+    }
+
 }
 
 module.exports = GrowthPlansController

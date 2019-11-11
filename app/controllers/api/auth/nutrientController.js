@@ -5,9 +5,9 @@ class NutrientHelper{
      * Nutrients TimeSeries Graph helper
      */
     async nutrientsTimeSeriesGraphs(match, property, denominator = 'trees'){
-        console.error('Denominator: '+denominator)
+        //console.error('Denominator: '+denominator)
         let outputData = [];
-        let data = await Factory.models.activity.find(match, null, {sort: {'dateCompleted': 1}}).exec();
+        let data = await Factory.models.activity.find({areaId: match.areaId}, null, {sort: {'dateCompleted': 1}}).exec();
         let activityAndArea = await Factory.models.area.findOne({_id: match.areaId}).exec();
         let totalTrees = 0;
         //console.log(data);
@@ -26,14 +26,25 @@ class NutrientHelper{
             /**
              * calculate trees
              */
+            let tasks = await Factory.models.task.find({activityId: thisActivity._id}).exec();
             
             let nowDate = new Date();
             if(thisActivity.dateCompleted && thisActivity.meanTotalQuantity){
-                
-                if(thisActivity.activityType == 'planting')
-                    totalTrees += thisActivity.meanTotalQuantity;
-                else if(thisActivity.activityType == 'harvest' || thisActivity.activityType == 'scrap')
-                    totalTrees -= thisActivity.meanTotalQuantity;
+                if(match.status == 'Plan'){
+                    if(thisActivity.activityType == 'planting')
+                        totalTrees += thisActivity.meanTotalQuantity;
+                    else if(thisActivity.activityType == 'harvest' || thisActivity.activityType == 'scrap')
+                        totalTrees -= thisActivity.meanTotalQuantity;
+                } else {
+                    for (let k = 0; k < tasks.length; k++) {
+                        const task = tasks[k];
+
+                        if(thisActivity.activityType == 'planting')
+                            totalTrees += thisActivity.otherQuantity; //otherQuantity contains quantities for planting/harvest etc
+                        else if(thisActivity.activityType == 'harvest' || thisActivity.activityType == 'scrap')
+                            totalTrees -= thisActivity.otherQuantity;
+                    }
+                }
             }
 
             /**
@@ -57,46 +68,47 @@ class NutrientHelper{
                 let quarterYear = dateCompleted.getFullYear();
 
                 
+                if(match.status == 'Plan'){
+                    for (let i = 0; i < thisActivity.mean.length; i++) {
+                        const meanId = thisActivity.mean[i];
+                        let nutrient = await Factory.models.inventory.findOne({'_id': meanId}).exec();
+                        let nutrientPercentage = (nutrient[property] && nutrient[property] >= 0) ? nutrient[property]/100 : 0;
+                        let nutrientQuantity = thisActivity.meanQuantity[i];
+                        
+                        let density = 1;
 
-                for (let i = 0; i < thisActivity.mean.length; i++) {
-                    const meanId = thisActivity.mean[i];
-                    let nutrient = await Factory.models.inventory.findOne({'_id': meanId}).exec();
-                    let nutrientPercentage = (nutrient[property] && nutrient[property] >= 0) ? nutrient[property]/100 : 0;
-                    let nutrientQuantity = thisActivity.meanQuantity[i];
-                    //totalNutrientsQuantity += nutrientQuantity * nutrientPercentage;
-                    /* console.log("Details: ")
-                    console.log(nutrient)
-                    console.log(nutrientQuantity)
-                    console.log(nutrient.nitrogen)
-                    console.log(quantityNutrient)
-                    console.log(totalTrees) */
-                    let density = 1;
-
-                    if(thisActivity.meanUnit[i] == 'Ltr'){
-                        //liquid
-                        //density = nutrient.density
-                        density = (nutrient.density) ? nutrient.density : 1;
-                        /* if(thisActivity.methodUnit == 'ha'){
-                            areaSize = (activityAndArea.areaSize) ? activityAndArea.areaSize*1 : 0;
-                            trees = 1;
-                        }else{
-                            areaSize = 1;
-                        } */
+                        if(thisActivity.meanUnit[i] == 'Ltr'){
+                            //liquid
+                            //density = nutrient.density
+                            density = (nutrient.density) ? nutrient.density : 1;
                             
-                    } /* else {
-                        //solid
-                        //density = 1
-                        density = 1;
-                        areaSize = 1
-                        if(thisActivity.methodUnit == 'ha'){
-                            areaSize = (activityAndArea.areaSize) ? activityAndArea.areaSize*1 : 0;
-                            trees = 1;
-                        }else{
-                            areaSize = 1;
                         }
-                    } */
-                    totalNutrientsQuantity += (nutrientQuantity*1) * (nutrientPercentage*1) * (density*1);
+                        totalNutrientsQuantity += (nutrientQuantity*1) * (nutrientPercentage*1) * (density*1);
+                    }
+                } else {
+                    for (let k = 0; k < tasks.length; k++) {
+                        const task = tasks[k];
+
+                        for (let i = 0; i < thisActivity.mean.length; i++) {
+                            const meanId = thisActivity.mean[i];
+                            let nutrient = await Factory.models.inventory.findOne({'_id': meanId}).exec();
+                            let nutrientPercentage = (nutrient[property] && nutrient[property] >= 0) ? nutrient[property]/100 : 0;
+                            let nutrientQuantity = task.meanQuantity[i];//only here is the difference
+                            
+                            let density = 1;
+    
+                            if(thisActivity.meanUnit[i] == 'Ltr'){
+                                //liquid
+                                //density = nutrient.density
+                                density = (nutrient.density) ? nutrient.density : 1;
+                                
+                            }
+                            totalNutrientsQuantity += (nutrientQuantity*1) * (nutrientPercentage*1) * (density*1);
+                        }
+                    }
                 }
+
+
                 areaSize = (activityAndArea.areaSize) ? activityAndArea.areaSize*1 : 1;
                 if(denominator == 'areaSize'){
                     totalNutrientsQuantity /= areaSize;
@@ -154,23 +166,7 @@ class NutrientHelper{
     async nutrientsTimeSeriesGraphs2(match, nutrientName){
         let outputData = [];
         let data = await Factory.models.nutrient.find(match, null, {sort: {'usedOnDate': 1}}).exec();
-        // let aggregation = [
-        //     { $match: match},
-        //     {
-        //         $group:{
-        //             "_id":{ month: { $month: "$usedOnDate" }, day: { $dayOfMonth: "$usedOnDate" }, year: { $year: "$usedOnDate" } }, 
-        //             value: {
-        //                 $sum: "$"+nutrientName+".value"
-        //             }
-        //         }
-        //     },
-        //     {
-        //         $sort:{
-        //             _id: -1
-        //         }
-        //     }
-        // ];
-        // let data = await Factory.models.nutrient.aggregate(aggregation);
+
         console.log(data);
 
         for (let i = 0; i < data.length; i++) {
@@ -583,11 +579,14 @@ class NutrientController {
                     let thisMatch = {};
                     if(req.body.areaId){
                         thisMatch = {
-                            areaId: req.body.areaId
+                            areaId: req.body.areaId,
+                            status: req.body.status
                         }
                     }else{
                         continue;
                     }
+
+                    console.log("Match: "+thisMatch);
 
                     let graphData = await (new NutrientHelper()).nutrientsTimeSeriesGraphs(thisMatch, req.body.nutrientName, denominator);
                     let graphResult = properties[i];

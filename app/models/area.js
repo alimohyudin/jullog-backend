@@ -54,7 +54,8 @@ let areaSchema = new baseModel.Schema({
     areaMysqlId: Number,
 	userMysqlId: {type: Number, required: true},
 
-    areaName: {type: String, required: true},
+	areaName: {type: String, required: true},
+	areaType: {type: String, required: true},
 	postCode: {type: String, default: ''},
 	roadAndNumber: {type: String, default: ''},
     yearOfEstablishment: {type: String, default: ''},
@@ -103,12 +104,13 @@ let areaSchema = new baseModel.Schema({
 	areaImages:[{type: String, default:''}],
 	mapLink:{type: String, default: ''},
 	latitude: {type: Number, default: 0},
-  longitude: {type: Number, default: 0},
-  openlayerMapFeatures: {type: String, default: ''},
+	longitude: {type: Number, default: 0},
+	openlayerMapFeatures: {type: String, default: ''},
 	
+	properties:[{type: String, ref: 'areaProperty'}],
 
-    createdAt: Date,
-    updatedAt: Date,
+    createdAt: {type: Date, default: Date.now},
+    updatedAt: {type: Date, default: Date.now},
     deletedAt: Date,
 });
 

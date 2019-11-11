@@ -5,7 +5,7 @@ i18n = require('i18n'),
 bodyParser = require('body-parser'),
 expressValidator = require('express-validator'),
 fileSystem = require('fs'),
-redisClient = {}, //require('redis').createClient(),
+redisClient = require('redis').createClient(),
 mongoose = require('mongoose'),
 cors = require('cors'),
 expressWinston = require('express-winston'),
@@ -27,9 +27,9 @@ require('winston-mongodb');
 mongoose.Promise = global.Promise;
 
 //mongoose.connect('mongodb://mongo/tender-app');
-//live: let mongodbUrl = 'mongodb://localhost/tender-app';
-//test: 
-let mongodbUrl = 'mongodb://127.0.0.1:27017/tender-app';
+//live: 
+let mongodbUrl = 'mongodb://localhost/tender-app';
+//test: let mongodbUrl = 'mongodb://127.0.0.1:27017/tender-app';
 
 //live: mongoose.connect(, { useNewUrlParser: true });
 mongoose.connect(mongodbUrl, { useNewUrlParser: true })
@@ -156,6 +156,7 @@ Factory.socketIO = socketIO.listen(server, {
 });
 Factory.socketIO.use(socketMiddleware);
 Factory.socketIO.on('connect', connectionListener.connected);
+
 console.log(`server running at: ${env.BASE_URL}`);
 
 // all authenticated routes will have /auth prefix

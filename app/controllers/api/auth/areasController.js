@@ -193,6 +193,7 @@ class AreasController {
         }
 
         req.checkBody('areaName', 'areaName is required').required();
+        req.checkBody('areaType', 'areaType is required').required();
 
         req.getValidationResult().then(async(result) => {
             if(!result.isEmpty()){
@@ -207,6 +208,7 @@ class AreasController {
                 userMysqlId: req.USER_MYSQL_ID,
 
                 areaName: req.body.areaName,
+                areaType: req.body.areaType,
                 postCode: (req.body.postCode) ? req.body.postCode: '',
                 roadAndNumber: (req.body.roadAndNumber) ? req.body.roadAndNumber: '',
                 yearOfEstablishment: (req.body.yearOfEstablishment) ? req.body.yearOfEstablishment: '',
@@ -251,6 +253,8 @@ class AreasController {
 
                 activities:[],
 
+                properties: (req.body.properties) ? req.body.properties : [],
+
 
 
                 createdAt: (req.body.createdAt) ? req.body.createdAt: new Date(),
@@ -293,6 +297,7 @@ class AreasController {
 
             var area = {
                 areaName: req.body.areaName,
+                areaType: req.body.areaType,
                 postCode: (req.body.postCode) ? req.body.postCode: '',
                 roadAndNumber: (req.body.roadAndNumber) ? req.body.roadAndNumber: '',
                 yearOfEstablishment: (req.body.yearOfEstablishment) ? req.body.yearOfEstablishment: '',
@@ -328,7 +333,9 @@ class AreasController {
                 windExposure: (req.body.windExposure) ? req.body.windExposure: '',
                 
                 fence: (req.body.fence) ? req.body.fence : '',
-	            notes: (req.body.notes) ? req.body.notes : '',
+                notes: (req.body.notes) ? req.body.notes : '',
+                
+                properties: (req.body.properties) ? req.body.properties : [],
 
                 //trees information; form 49
                 updatedAt: (req.body.updatedAt) ? req.body.updatedAt: new Date(),
@@ -638,6 +645,7 @@ class AreasController {
                 totalCost: (req.body.totalCost) ? req.body.totalCost : '',
                 performedBy: (req.body.performedBy) ? req.body.performedBy : '',
                 contractor: (req.body.contractor) ? req.body.contractor : '',
+                contractors: (req.body.contractors) ? req.body.contractors : [],
                 hoursSpent: (req.body.hoursSpent) ? req.body.hoursSpent : '',
                 purpose: (req.body.purpose) ? req.body.purpose : '',
                 reported: (req.body.reported) ? req.body.reported : '',
@@ -740,8 +748,12 @@ class AreasController {
             }
 
             let updateField ={};
-            updateField[req.body.fieldName] = req.body.value;
-
+            
+            if(req.body.fieldName == 'properties')
+                updateField[req.body.fieldName] = req.body.value.split(',')
+            else
+                updateField[req.body.fieldName] = req.body.value;
+                
             console.log(updateField);
             // save
             Factory.models.area.update({_id: req.body.areaId}, updateField, async(err, updatedArea) => {
@@ -1223,7 +1235,7 @@ class AreasController {
                 let skip = (pagination.page-1)*PER_PAGE_AREAS;
                 pagination.previous = pagination.page - 1;
                 pagination.next = pagination.page + 1;
-                Factory.models.area.find(where, '_id areaName userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
+                Factory.models.area.find(where, '_id areaName areaType userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
                 .sort({areaName: 1})
                 .lean(true)
                 .limit(PER_PAGE_AREAS)
@@ -1279,7 +1291,7 @@ class AreasController {
     getAllAreas(req, res){
         let where = {userMysqlId: req.USER_MYSQL_ID};
         
-        Factory.models.area.find(where, '_id areaName userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
+        Factory.models.area.find(where, '_id areaName areaType userMysqlId areaSize yearOfEstablishment numberOfTrees createdAt updatedAt')
         .sort({areaName: 1})
         .lean(true)
         .exec(async(err, areas) => {
