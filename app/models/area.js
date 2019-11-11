@@ -109,8 +109,8 @@ let areaSchema = new baseModel.Schema({
 	
 	properties:[{type: String, ref: 'areaProperty'}],
 
-    createdAt: Date,
-    updatedAt: Date,
+    createdAt: {type: Date, default: Date.now},
+    updatedAt: {type: Date, default: Date.now},
     deletedAt: Date,
 });
 

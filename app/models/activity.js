@@ -58,7 +58,7 @@ let baseModel = require('./baseModel');
 let activitySchema = new baseModel.Schema({
 
 	userMysqlId: {type: Number, required: true},
-	areaId: {type: String, ref:'area'},
+	areaId: {type: String, ref:'Area'},
 	planId: {type: String, ref:'growthplan'},
 	strategyId: {type: String, ref:'activity'},
 	templateId: {type: String, ref:'activity'},
@@ -76,9 +76,9 @@ let activitySchema = new baseModel.Schema({
 	meanName:[{type:String, default: ''}],
 	meanUnitPrice: [{ type: Number, default: 0}],
 	meanDose: [{ type: Number, default: 0}],
-	meanQuantity: [{ type: Number, default: 0}],
+	meanQuantity: [{ type: Number, default: 0}],//planned
 	meanUnit: [{ type: String, default: 0}],
-	meanTotalQuantity: { type: Number, default: 0},
+	meanTotalQuantity: { type: Number, default: 0},//planned
 	meanJournalReported: [{ type: Boolean, default: false}],
 	
 	
@@ -88,10 +88,20 @@ let activitySchema = new baseModel.Schema({
 
 	meanCost: { type: Number, default: 0},
 	machineCost: { type: Number, default: 0},
-	totalCost: { type: Number, default: 0},
+	totalCost: { type: Number, default: 0}, //planned
+	hoursSpent: {type: Number, default: 0}, //planned
+
+	actualMeanQuantity: [{ type: Number, default: 0}],//actual
+	actualMeanTotalQuantity: { type: Number, default: 0},//actual
+	actualTotalCost: { type: Number, default: 0}, //actual
+	actualHoursSpent: {type: Number, default: 0}, //actual
+
+
+
 	performedBy: { type: String, default: ''},
 	contractor: { type: String, default: ''},
-	hoursSpent: {type: Number, default: 0},
+	contractors: [{ type: String, ref: 'Staff'}],
+	
 	purpose: { type: String, default: ''},
 	reported: { type: String, default: ''},
 	notes: { type: String, default: ''},
@@ -120,8 +130,8 @@ let activitySchema = new baseModel.Schema({
 	
 	autoUpdate: {type: Boolean, default:true},
 
-    createdAt: Date,
-    updatedAt: Date,
+    createdAt: {type: Date, default: Date.now},
+    updatedAt: {type: Date, default: Date.now},
     deletedAt: Date,
 });
 
