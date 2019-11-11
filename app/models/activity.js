@@ -76,9 +76,9 @@ let activitySchema = new baseModel.Schema({
 	meanName:[{type:String, default: ''}],
 	meanUnitPrice: [{ type: Number, default: 0}],
 	meanDose: [{ type: Number, default: 0}],
-	meanQuantity: [{ type: Number, default: 0}],
+	meanQuantity: [{ type: Number, default: 0}],//planned
 	meanUnit: [{ type: String, default: 0}],
-	meanTotalQuantity: { type: Number, default: 0},
+	meanTotalQuantity: { type: Number, default: 0},//planned
 	meanJournalReported: [{ type: Boolean, default: false}],
 	
 	
@@ -90,6 +90,9 @@ let activitySchema = new baseModel.Schema({
 	machineCost: { type: Number, default: 0},
 	totalCost: { type: Number, default: 0}, //planned
 	hoursSpent: {type: Number, default: 0}, //planned
+
+	actualMeanQuantity: [{ type: Number, default: 0}],//actual
+	actualMeanTotalQuantity: { type: Number, default: 0},//actual
 	actualTotalCost: { type: Number, default: 0}, //actual
 	actualHoursSpent: {type: Number, default: 0}, //actual
 

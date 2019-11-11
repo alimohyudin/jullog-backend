@@ -15,11 +15,38 @@ class SharedWorkHelper{
                      */
                     actualTotalCost += activity.meanUnitPrice[index] * task.meanQuantity[index];
                 }
+
+                if(task.hoursSpent && task.hoursSpent >=0 && task.hourlyRate && task.hourlyRate >= 0)
+                    actualTotalCost += task.hoursSpent * task.hourlyRate;
                 
                 let prevActualTotalCost = 0;
                 if(activity.actualTotalCost && activity.actualTotalCost > 0)
                     prevActualTotalCost = activity.actualTotalCost;
                 activity.actualTotalCost = prevActualTotalCost + actualTotalCost;
+
+                if(activity.actualMeanQuantity && activity.actualMeanQuantity.length > 0){
+                    console.log("Mean Quantity Exists:")
+                    console.log(activity.actualMeanQuantity);
+                    console.log(task.meanQuantity)
+                    let newMeanQuantity = [];
+                    for (let index = 0; index < task.meanQuantity.length; index++) {
+                        newMeanQuantity.push(activity.actualMeanQuantity[index] + task.meanQuantity[index]);
+                    }
+                    activity.actualMeanQuantity = newMeanQuantity;
+                    console.log(activity.actualMeanQuantity);
+                } else {
+                    console.log("Mean Quantity DOESN'T Exists:")
+                    console.log(activity.actualMeanQuantity);
+                    console.log(task.meanQuantity)
+                    activity.actualMeanQuantity = task.meanQuantity;
+                }
+
+                //activity.actualMeanQuantity = task.meanQuantity;
+
+                let prevActualMeanTotalQuantity = 0;
+                if(activity.actualMeanTotalQuantity && activity.actualMeanTotalQuantity > 0)
+                    prevActualMeanTotalQuantity = activity.actualMeanTotalQuantity;
+                activity.actualMeanTotalQuantity = prevActualMeanTotalQuantity + task.otherQuantity;
                 
             } else if(task.otherQuantity && task.salePricePerUnit){
                 let actualTotalCost = task.otherQuantity * task.salePricePerUnit;
@@ -29,6 +56,11 @@ class SharedWorkHelper{
                 if(activity.actualTotalCost && activity.actualTotalCost > 0)
                     prevActualTotalCost = activity.actualTotalCost;
                 activity.actualTotalCost = prevActualTotalCost + actualTotalCost;
+                
+                let prevActualMeanTotalQuantity = 0;
+                if(activity.actualMeanTotalQuantity && activity.actualMeanTotalQuantity > 0)
+                    prevActualMeanTotalQuantity = activity.actualMeanTotalQuantity;
+                activity.actualMeanTotalQuantity = prevActualMeanTotalQuantity + task.otherQuantity;
             }
             
             if(task.hoursSpent){

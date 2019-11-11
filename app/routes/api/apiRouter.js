@@ -131,6 +131,7 @@ module.exports = (router) => {
     router.post(baseRoute + 'inventory/get-shopping-list', auth.inventoryController.getShoppingList);
     router.post(baseRoute + 'inventory/get-fertilizer-overview', auth.inventoryController.getFertilizerOverview);
     router.post(baseRoute + 'inventory/get-products-journal', auth.inventoryController.getProductsJournal);
+    router.post(baseRoute + 'inventory/get-old-products-journal', auth.inventoryController.getOldProductsJournal);
 
     router.post(baseRoute + 'methods/create-method', auth.methodsController.createMethod);
     router.post(baseRoute + 'methods/delete-method', auth.methodsController.deleteMethod);

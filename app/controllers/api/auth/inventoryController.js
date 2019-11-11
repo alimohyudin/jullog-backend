@@ -1109,7 +1109,140 @@ class InventoryController {
             }) */
       });
       
-  }
+    }
+
+
+    /**
+     * Get Old Products Journal with pagination
+     * @function
+     * @param {Date} [fromDate] {@link ActivitySchema}.dateCompleted
+     * @param {Date} [toDate] {@link ActivitySchema}.dateCompleted
+     * @param {String} [areaId] {@link AreaSchema}._id
+     * @param {String} [activityType] {@link ActivitySchema}.activityType
+     * @param {String} [status] {@link AreaSchema}.status
+     * @default status = Udført and {@link ActivitySchema}.mean != null
+     * @description Fertlizer overview = Total of a single Nutrient / {@link AreaSchema}.areaSize 
+     * @returns {PrepareResponse|InventorySchema|Pagination} Returns the Default response object.  With `data` object containing Products
+     */
+    getOldProductsJournal(req, res){
+        req.getValidationResult().then(async(result) =>{
+            let match = {}, aggregation = [], where=[];
+            let areaName = 'All Activities';
+  
+            
+                where.push({'userMysqlId' : req.USER_MYSQL_ID});
+  
+                let now = new Date();
+  
+                let fromDate = (req.body.fromDate)? new Date(req.body.fromDate) : new Date(now.getFullYear()+"-01-01");
+                let toDate = (req.body.toDate)? new Date(req.body.toDate) : new Date(now.getFullYear()+"-12-31");
+                console.log(toDate);
+                //toDate.setDate(toDate.getDate() + 1);
+                //console.log(toDate);
+                //toDate = toDate.add(1).day();
+                /**
+                 * where.push({'createdAt' : { $gte: fromDate, $lt: toDate}});
+                 */
+                //where.push({'dateCompleted' : { $gte: fromDate, $lt: toDate}});
+  
+  
+                // if(req.body.status && req.body.status != '')
+                //     where.push({'status': req.body.status});
+                let dateFilter = {};
+                if(req.body.fromDate && req.body.toDate)
+                    dateFilter = {dateCompleted: { $gte: fromDate, $lt: toDate}};
+                else if(req.body.toDate)
+                    dateFilter = {dateCompleted: { $lt: toDate}};
+                else if(req.body.fromDate)
+                    dateFilter = {dateCompleted: { $gte: fromDate}};
+  
+  
+                let areaIdFilter = {};
+                if(req.body.areaId)
+                    areaIdFilter = {'areaId': {$eq: req.body.areaId}};
+                else
+                    areaIdFilter = {'areaId': {$ne: null}};
+                    
+                let activityTypeFilter = {};
+                  activityTypeFilter = {'activityType': {$in: ['spraying', 'fertilizing']}};
+  
+                match = {
+                    $and: [
+                        {userMysqlId: req.USER_MYSQL_ID},
+                        activityTypeFilter,
+                        dateFilter,
+                        areaIdFilter,
+                        {status: 'Udført'},
+                        {'mean': {$ne: null}}
+                    ]
+                };
+  
+                console.log(JSON.stringify(match));
+                
+            //get all user products
+            //let allProducts = await Factory.models.inventory.findOne({userMysqlId: req.USER_MYSQL_ID}).exec();
+            //get all user activities OR find activity with current product id and get its quantity
+            /* for (let i = 0; i < allProducts.length; i++) {
+                const product = allProducts[i];
+                let activities = await Factory.models.activity.find({mean: product._id, dateFilter, areaIdFilter}).exec();
+                
+            } */
+            let plannedProducts = {};
+  
+            Factory.models.activity.find(match)
+            .populate({path: 'areaId', select: '_id areaName areaSize farmFieldId', model: Factory.models.area})
+            .populate({path: 'mean', select: '_id name registrationNumber type', model: Factory.models.inventory})
+            .exec(async(err, allProducts)=>{
+                if(err){
+                    return res.send(Factory.helpers.prepareResponse({
+                        success: false,
+                        message: req.__('Error finding activities.')
+                    }))
+                }
+  
+                console.log("total activities: "+allProducts.length);
+                return res.send(Factory.helpers.prepareResponse({
+                    message: req.__('Products journal.'),
+                    data: allProducts,
+                    user_vat_number: req.VAT_NUMBER
+                }))
+                //console.log(allProducts);
+  
+                /**
+                 * pagination
+                 */
+                /* let count = allProducts.length;
+                let page = Math.abs(req.query.page);
+                let pagination = {
+                    total: count,
+                    pages: Math.ceil(count / Factory.env.PER_PAGE.PRODUCTS),
+                    per_page: Factory.env.PER_PAGE.PRODUCTS,
+                    page: isNaN(page) ? 1:page,
+                };
+                if (pagination.page <= pagination.pages) {
+                    let skip = (pagination.page-1)*Factory.env.PER_PAGE.PRODUCTS;
+                    pagination.previous = pagination.page - 1;
+                    pagination.next = pagination.page + 1;
+                    let paginatedResult = allProducts.splice(skip, pagination.per_page);
+                    console.log("my hateful pagination: ");
+                    console.log(pagination);
+                    return res.send(Factory.helpers.prepareResponse({
+                        message: req.__('Expenditures data.'),
+                        data: paginatedResult,
+                        pagination: pagination,
+                    }))
+                }else{
+                    console.log("my lovely page: "+pagination.page);
+                    return res.send(Factory.helpers.prepareResponse({
+                        message: req.__('Expenditures data.'),
+                        data: [],
+                        pagination: pagination,
+                    }))
+                } */
+            })
+        });
+        
+    }
 }
 
 module.exports = InventoryController
