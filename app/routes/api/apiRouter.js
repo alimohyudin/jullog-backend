@@ -169,6 +169,7 @@ module.exports = (router) => {
 
     router.post(baseRoute + 'finance/finance-a', auth.financeController.getFinanceA);
     router.post(baseRoute + 'finance/finance-b', auth.financeController.getFinanceB);
+    router.post(baseRoute + 'finance/finance-c', auth.financeController.getFinanceC);
     
     return router;
 };

@@ -25,33 +25,22 @@ require('winston-mongodb');
  * DB CONNECTION
  */
 mongoose.Promise = global.Promise;
-
+//mongoose.connect('mongodb://213.136.72.86:27017/tender-app');
+//mongoose.connect('mongodb://173.212.224.132:27017/tender-app');
 //mongoose.connect('mongodb://mongo/tender-app');
-//live: 
-let mongodbUrl = 'mongodb://localhost/tender-app';
-//test: let mongodbUrl = 'mongodb://127.0.0.1:27017/tender-app';
-
-//live: mongoose.connect(, { useNewUrlParser: true });
-mongoose.connect(mongodbUrl, { useNewUrlParser: true })
-        .then(() => {
-            //return server.start();
-        })
-        .catch(err => { // mongoose connection error will be handled here
-            console.error('App starting error:', err.stack);
-            process.exit(1);
-        });
+mongoose.connect('mongodb://127.0.0.1:27017/tender-app', { useNewUrlParser: true });
 let models = require('./models/db'),
 validators = require('./util/validators'),
 Factory = require('./util/factory');
 Factory.env = env;
 Factory.models = models;
+Factory.mongoose = mongoose;
 Factory.redisClient = redisClient;
 Factory.validators = validators;
-Factory.mongoose = mongoose;
 Factory.logger = winston.createLogger({
     transports: [
         new winston.transports.MongoDB({
-            db: mongodbUrl,
+            db: 'mongodb://127.0.0.1:27017/tender-app',
             collection: 'logger',
             level: 'info',
             storeHost: true,
@@ -78,7 +67,7 @@ expressWinston.requestWhitelist.push('ip')
 let expressLogger = expressWinston.logger({
     transports: [
         new winston.transports.MongoDB({
-            db: mongodbUrl,
+            db: 'mongodb://127.0.0.1:27017/tender-app',
             collection: 'logger',
             level: 'info',
             storeHost: true,
@@ -156,7 +145,6 @@ Factory.socketIO = socketIO.listen(server, {
 });
 Factory.socketIO.use(socketMiddleware);
 Factory.socketIO.on('connect', connectionListener.connected);
-
 console.log(`server running at: ${env.BASE_URL}`);
 
 // all authenticated routes will have /auth prefix

@@ -563,17 +563,30 @@ class Helpers {
                     subElement.dateCompleted = new Date(1970);
                 }
 
+                let meanTotalQuantity = subElement.meanTotalQuantity;
+                if(subElement.status == 'Udført')
+                    meanTotalQuantity = subElement.actualMeanTotalQuantity;
+
+                /* if(subElement.activityType == "planting"){
+                    subElement.calculatedTreeNumber = totalInitialTrees + meanTotalQuantity;
+                    totalInitialTrees += meanTotalQuantity;
+                }
+                else{
+                    subElement.calculatedTreeNumber = totalInitialTrees - meanTotalQuantity;
+                    totalInitialTrees -= meanTotalQuantity;
+                } */
+
                 console.log("activity type: "+subElement.activityType);
                 console.log("quantity: "+subElement.meanTotalQuantity);
                 console.log("now total: "+ totalInitialTrees);
 
                 if(subElement.activityType != 'planting')
-                    totalInitialTrees -= subElement.meanTotalQuantity;
+                    totalInitialTrees -= meanTotalQuantity;
                 else
-                    totalInitialTrees += subElement.meanTotalQuantity;
+                    totalInitialTrees += meanTotalQuantity;
 
 
-                console.log("quantity: "+subElement.meanTotalQuantity);
+                console.log("quantity: "+meanTotalQuantity);
                 console.log("now total: "+ totalInitialTrees);
 
                 retVal[i] = {dateCompleted: subElement.dateCompleted, numberOfTrees: totalInitialTrees};
@@ -627,10 +640,14 @@ class Helpers {
                 if(allActivities[i].autoUpdate == false || allActivities[i].status == 'Udført')
                 {
                     //ignore if autoupdate has false value, but if it is not added in database then perform else condition
+                    let thisMeanTotalQuantity = allActivities[i].meanTotalQuantity*1;
+                    if(allActivities[i].status == 'Udført')
+                        thisMeanTotalQuantity = allActivities[i].actualMeanTotalQuantity;
+
                     if(allActivities[i].activityType == 'harvest' || allActivities[i].activityType == 'scrap')
-                        currentNumberOfTrees -= allActivities[i].meanTotalQuantity*1;
+                        currentNumberOfTrees -= thisMeanTotalQuantity;
                     else if(allActivities[i].activityType == 'planting')
-                        currentNumberOfTrees += allActivities[i].meanTotalQuantity*1;
+                        currentNumberOfTrees += thisMeanTotalQuantity;
                 }
                 else
                 {

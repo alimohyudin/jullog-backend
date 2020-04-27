@@ -12,6 +12,7 @@ sharing = require('./sharing');
 notification = require('./notification');
 staff = require('./staff');
 task = require('./task');
+settings = require('./settings');
 
 module.exports = {
     area: area,
@@ -27,4 +28,5 @@ module.exports = {
     notification: notification,
     staff: staff,
     task: task,
+    settings: settings,
 };
